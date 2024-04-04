@@ -17,10 +17,8 @@ use calendar::Calendar;
 use error::Error;
 use extensions::{StepExtension, TimestampExtension};
 
-use camino::Utf8PathBuf;
-use chrono::{DateTime, Local};
+use chrono::DateTime;
 use electrum_client::bitcoin::hashes::Hash;
-use electrum_client::bitcoin::hex::FromHex;
 use electrum_client::{Client, ElectrumApi};
 use log::{debug, info};
 use ots::hex::Hexed;
@@ -32,9 +30,7 @@ use ots::{
     DetachedTimestampFile, Timestamp,
 };
 use rs_merkle::{algorithms::Sha256, MerkleTree};
-use std::io::Write;
-use std::path::Path;
-use std::{convert::TryInto, fs, io::Read};
+use std::convert::TryInto;
 
 pub fn info(ots: DetachedTimestampFile) -> Result<String, Error> {
     Ok(ots.to_string())
@@ -73,7 +69,7 @@ impl std::fmt::Display for BitcoinAttestationResult {
 }
 
 pub fn verify(ots: DetachedTimestampFile) -> Result<BitcoinAttestationResult, Error> {
-    let mut client = Client::new("tcp://electrum.blockstream.info:50001").unwrap();
+    let client = Client::new("tcp://electrum.blockstream.info:50001").unwrap();
     for attestation in ots.timestamp.all_attestations() {
         match attestation.1 {
             Attestation::Bitcoin { height } => {
