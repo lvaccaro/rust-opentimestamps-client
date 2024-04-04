@@ -100,11 +100,16 @@ pub fn upgrade(ots: &mut DetachedTimestampFile) -> Result<(), Error> {
             Attestation::Bitcoin { height: _ } => None,
             Attestation::Unknown { tag: _, data: _ } => None,
         };
-        let calendar = Calendar {
+        let commitment = attestation.0;
+        let res = Calendar {
             url: calendar_url.unwrap(),
-        };
-        let upgraded = calendar.get_timestamp(attestation.0);
-        ots.timestamp.merge(upgraded.unwrap());
+        }
+        .get_timestamp(commitment.clone())
+        .map_err(|err| Error::NetworkError(err))?;
+        let mut deser = ots::ser::Deserializer::new(res);
+        let upgraded =
+            Timestamp::deserialize(&mut deser, commitment).map_err(|err| Error::InvalidOts(err))?;
+        ots.timestamp.merge(upgraded);
     }
     Ok(())
 }
@@ -207,7 +212,7 @@ pub fn stamps(
         }
     }
 
-    let calendar_url = "https://finney.calendar.eternitywall.com";
+    let calendar_url = calendar::FINNEY;
     let calendar_timestamp =
         create_timestamp(merkle_tip.to_vec(), calendar_url.to_string()).unwrap();
 
@@ -217,7 +222,11 @@ pub fn stamps(
     Ok(file_timestamps)
 }
 
-fn create_timestamp(stamp: Vec<u8>, calendar_url: String) -> Result<Timestamp, reqwest::Error> {
+fn create_timestamp(stamp: Vec<u8>, calendar_url: String) -> Result<Timestamp, Error> {
     info!("Submitting to remote calendar {}", calendar_url);
-    Calendar { url: calendar_url }.submit_calendar(stamp)
+    let res = Calendar { url: calendar_url }
+        .submit_calendar(stamp.clone())
+        .map_err(|err| Error::NetworkError(err))?;
+    let mut deser = ots::ser::Deserializer::new(res);
+    Timestamp::deserialize(&mut deser, stamp.to_vec()).map_err(|err| Error::InvalidOts(err))
 }

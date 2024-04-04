@@ -1,8 +1,17 @@
 // Copyright (C) 2024 The OpenTimestamps developers
 
 use ots::hex::Hexed;
-use ots::Timestamp;
+use reqwest::blocking::Response;
 use reqwest::header::{ACCEPT, USER_AGENT};
+
+#[allow(dead_code)]
+pub(crate) const APOOL: &str = "https://a.pool.opentimestamps.org";
+#[allow(dead_code)]
+pub(crate) const BPOOL: &str = "https://b.pool.opentimestamps.org";
+#[allow(dead_code)]
+pub(crate) const FINNEY: &str = "https://finney.calendar.eternitywall.com";
+#[allow(dead_code)]
+pub(crate) const CTLLX: &str = "https://ots.btc.catallaxy.com";
 
 const USER_AGENT_OTS: &str = "Rust-OpenTimestamps-Client/0";
 const ACCEPT_OTS: &str = "application/vnd.opentimestamps.v1";
@@ -12,38 +21,26 @@ pub struct Calendar {
 }
 
 impl Calendar {
-    pub fn submit_calendar(&self, msg: Vec<u8>) -> Result<Timestamp, reqwest::Error> {
+    pub fn submit_calendar(&self, msg: Vec<u8>) -> Result<Response, reqwest::Error> {
         let url = format!("{}/digest", self.url);
         println!("{:?}", url.clone());
-        let res = reqwest::blocking::Client::builder()
-            .build()
-            .unwrap()
+        reqwest::blocking::Client::builder()
+            .build()?
             .post(url)
             .header(USER_AGENT, USER_AGENT_OTS)
             .header(ACCEPT, ACCEPT_OTS)
             .body(msg.to_vec())
             .send()
-            .unwrap();
-
-        let mut deser = ots::ser::Deserializer::new(res);
-        let timestamp = Timestamp::deserialize(&mut deser, msg.to_vec()).unwrap();
-        Ok(timestamp)
     }
 
-    pub fn get_timestamp(&self, commitment: Vec<u8>) -> Result<Timestamp, reqwest::Error> {
+    pub fn get_timestamp(&self, commitment: Vec<u8>) -> Result<Response, reqwest::Error> {
         let url = format!("{}/timestamp/{}", self.url, Hexed(&commitment));
         println!("{:?}", url);
-        let res = reqwest::blocking::Client::builder()
-            .build()
-            .unwrap()
+        reqwest::blocking::Client::builder()
+            .build()?
             .get(url)
             .header(USER_AGENT, USER_AGENT_OTS)
             .header(ACCEPT, ACCEPT_OTS)
             .send()
-            .unwrap();
-
-        let mut deser = ots::ser::Deserializer::new(res);
-        let timestamp = Timestamp::deserialize(&mut deser, commitment.to_vec()).unwrap();
-        Ok(timestamp)
     }
 }

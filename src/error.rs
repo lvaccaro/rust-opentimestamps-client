@@ -1,5 +1,9 @@
+// Copyright (C) 2024 The OpenTimestamps developers
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("Network error")]
+    NetworkError(reqwest::Error),
     #[error("Ots error")]
     InvalidOts(ots::error::Error),
     #[error("IO error")]
