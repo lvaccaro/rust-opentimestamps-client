@@ -14,11 +14,8 @@ mod args;
 
 use crate::args::*;
 use camino::Utf8PathBuf;
-use chrono::DateTime;
 use clap::Parser;
-use electrum_client::bitcoin::hashes::Hash;
 use electrum_client::bitcoin::hex::FromHex;
-use electrum_client::{Client, ElectrumApi};
 use log::{debug, error, info};
 use opentimestamps_client::error::Error;
 use ots::hex::Hexed;
@@ -34,7 +31,7 @@ fn main() {
     let cli_opts: CliOpts = CliOpts::parse();
 
     match handle_command(cli_opts) {
-        Ok(result) => {}
+        Ok(_result) => {}
         Err(e) => error!("{}", e.to_string()),
     }
 }

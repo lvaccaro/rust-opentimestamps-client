@@ -37,7 +37,6 @@ pub fn info(ots: DetachedTimestampFile) -> Result<String, Error> {
 }
 /// Verify attestation against a block header
 fn verify_against_blockheader(
-    attestation: Attestation,
     digest: [u8; 32],
     block_header: electrum_client::bitcoin::block::Header,
 ) -> Result<u32, Error> {
@@ -75,11 +74,8 @@ pub fn verify(ots: DetachedTimestampFile) -> Result<BitcoinAttestationResult, Er
             Attestation::Bitcoin { height } => {
                 let block_header = client.block_header(height).unwrap();
                 debug!("Attestation block hash: {:?}", block_header.block_hash());
-                let time = verify_against_blockheader(
-                    attestation.1,
-                    attestation.0.try_into().unwrap(),
-                    block_header,
-                )?;
+                let time =
+                    verify_against_blockheader(attestation.0.try_into().unwrap(), block_header)?;
                 let result = BitcoinAttestationResult { height, time };
                 info!("Success! {}", result);
                 return Ok(BitcoinAttestationResult { height, time });
@@ -87,7 +83,7 @@ pub fn verify(ots: DetachedTimestampFile) -> Result<BitcoinAttestationResult, Er
             Attestation::Pending { uri } => {
                 debug!("Ignoring Pending Attestation at {:?}", uri);
             }
-            Attestation::Unknown { tag, data } => {
+            Attestation::Unknown { tag: _, data: _ } => {
                 debug!("Ignoring Unknown Attestation");
             }
         };
@@ -99,8 +95,8 @@ pub fn upgrade(ots: &mut DetachedTimestampFile) -> Result<(), Error> {
     for attestation in ots.timestamp.all_attestations() {
         let calendar_url = match attestation.1 {
             Attestation::Pending { ref uri } => Some(uri.clone()),
-            Attestation::Bitcoin { height } => None,
-            Attestation::Unknown { ref tag, ref data } => None,
+            Attestation::Bitcoin { height: _ } => None,
+            Attestation::Unknown { tag: _, data: _ } => None,
         };
         let calendar = Calendar {
             url: calendar_url.unwrap(),
