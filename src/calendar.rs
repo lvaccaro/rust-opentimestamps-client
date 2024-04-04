@@ -1,17 +1,7 @@
-use std::convert::TryFrom;
-
 use ots::hex::Hexed;
-use ots::{
-    attestation::{self, Attestation},
-    op::Op,
-    timestamp::{self, Step, StepData},
-    DetachedTimestampFile, Timestamp,
-};
+use ots::Timestamp;
 use reqwest::header::{ACCEPT, USER_AGENT};
 use reqwest::Error;
-
-use step_extension::*;
-use timestamp_extension::*;
 
 const USER_AGENT_OTS: &str = "Rust-OpenTimestamps-Client/0";
 const ACCEPT_OTS: &str = "application/vnd.opentimestamps.v1";
@@ -51,19 +41,8 @@ impl Calendar {
             .send()
             .unwrap();
 
-        println!("{:?}", res.text());
-
-        Ok(Timestamp {
-            start_digest: vec![],
-            first_step: Step {
-                data: StepData::Fork,
-                output: vec![],
-                next: (vec![]),
-            },
-        })
-
-        //let mut deser = ots::ser::Deserializer::new(res);
-        //let timestamp = Timestamp::deserialize(&mut deser, commitment.to_vec()).unwrap();
-        //Ok(timestamp)
+        let mut deser = ots::ser::Deserializer::new(res);
+        let timestamp = Timestamp::deserialize(&mut deser, commitment.to_vec()).unwrap();
+        Ok(timestamp)
     }
 }

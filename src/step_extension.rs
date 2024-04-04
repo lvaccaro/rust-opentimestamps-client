@@ -1,8 +1,8 @@
 use ots::{
-    attestation::{self, Attestation},
+    attestation::Attestation,
     op::Op,
-    timestamp::{self, Step, StepData},
-    DetachedTimestampFile, Timestamp,
+    timestamp::{Step, StepData},
+    Timestamp,
 };
 use std::collections::HashMap;
 

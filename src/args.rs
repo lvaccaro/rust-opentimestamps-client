@@ -1,6 +1,5 @@
 use camino::Utf8PathBuf;
-use clap::{Args, Parser, Subcommand, ValueEnum};
-use std::{fs, path::PathBuf};
+use clap::{Parser, Subcommand};
 
 /// A liquid wallet with watch-only confidential descriptors and hardware signers.
 /// WARNING: not yet for production use, expect bugs, breaking changes and loss of funds.
@@ -18,14 +17,14 @@ pub enum CliCommand {
     #[clap(long_about = "Timestamp files")]
     Stamp {
         /// Filenames
-        #[clap(name = "files", required = true, short, long, value_parser, num_args = 1.., value_delimiter = ' ')]
+        #[clap(name = "files", required = true, num_args = 1.., value_delimiter = ' ', index = 1)]
         files: Vec<Utf8PathBuf>,
     },
 
     #[clap(long_about = "Upgrade remote calendar timestamps to be locally verifiable")]
     Upgrade {
         /// Existing timestamp(s); moved to FILE.bak
-        #[clap(name = "files", required = true, short, long, value_parser, num_args = 1.., value_delimiter = ' ')]
+        #[clap(name = "files", required = true, num_args = 1.., value_delimiter = ' ', index = 1)]
         files: Vec<Utf8PathBuf>,
     },
 
@@ -39,7 +38,7 @@ pub enum CliCommand {
     #[clap(long_about = "Verify a timestamp")]
     Verify {
         /// Timestamp file
-        #[clap(name = "timestamp", required = true)]
+        #[clap(name = "timestamp", required = true, index = 1)]
         timestamp: Utf8PathBuf,
         /// Specify target file explicitly
         #[clap(name = "target")]

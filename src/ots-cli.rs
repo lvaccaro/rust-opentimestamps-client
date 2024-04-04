@@ -211,7 +211,7 @@ fn upgrade(files: Vec<Utf8PathBuf>) -> Result<String, Error> {
 }
 
 fn upgrade_file(path: Utf8PathBuf) -> Result<String, Error> {
-    //logging.debug("Upgrading {}", path);
+    debug!("Upgrading {}", path);
 
     let file = fs::File::open(path.clone()).unwrap();
     let mut ots = DetachedTimestampFile::from_reader(file).unwrap();
@@ -219,9 +219,9 @@ fn upgrade_file(path: Utf8PathBuf) -> Result<String, Error> {
     ots.timestamp = changed;
 
     let backup_name = format!("{}.bak", path);
-    //logging.debug("Got new timestamp data; renaming existing timestamp to {}", backup_name);
+    debug!("Got new timestamp data; renaming existing timestamp to {}", backup_name);
     if Path::new(backup_name.as_str()).exists() {
-        //logging.error("Could not backup timestamp: {} already exists", backup_name)
+        error!("Could not backup timestamp: {} already exists", backup_name);
         return Ok("".to_string());
     }
     fs::rename(path.clone(), backup_name).unwrap();
@@ -250,6 +250,7 @@ fn upgrade_timestamp(timestamp: &Timestamp) -> Result<Timestamp, reqwest::Error>
 }
 
 fn create_timestamp(stamp: Vec<u8>, calendar_url: String) -> Result<Timestamp, reqwest::Error> {
+    info!("Submitting to remote calendar {}", calendar_url);
     Calendar { url: calendar_url }.submit_calendar(stamp)
 }
 

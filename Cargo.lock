@@ -953,7 +953,7 @@ dependencies = [
 
 [[package]]
 name = "opentimestamps_client"
-version = "0.2.0"
+version = "0.0.1"
 dependencies = [
  "bitcoin_hashes 0.12.0",
  "camino",

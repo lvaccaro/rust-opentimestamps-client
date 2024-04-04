@@ -1,8 +1,7 @@
 use ots::{
-    attestation::{self, Attestation},
-    op::Op,
-    timestamp::{self, Step, StepData},
-    DetachedTimestampFile, Timestamp,
+    attestation::Attestation,
+    timestamp::Step,
+    Timestamp,
 };
 use std::collections::HashMap;
 use step_extension::StepExtension;
