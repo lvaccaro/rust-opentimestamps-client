@@ -1,3 +1,5 @@
+// Copyright (C) 2024 The OpenTimestamps developers
+
 use ots::{
     attestation::Attestation,
     op::Op,

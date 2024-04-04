@@ -1,3 +1,5 @@
+// Copyright (C) 2024 The OpenTimestamps developers
+
 use camino::Utf8PathBuf;
 use clap::{Parser, Subcommand};
 

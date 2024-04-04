@@ -1,3 +1,5 @@
+// Copyright (C) 2024 The OpenTimestamps developers
+
 extern crate camino;
 extern crate chrono;
 extern crate clap;

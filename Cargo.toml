@@ -1,7 +1,9 @@
+# Copyright (C) 2024 The OpenTimestamps developers
+
 [package]
 name = "opentimestamps_client"
 version = "0.0.1"
-license = "MIT OR Apache-2.0"
+license = "LPGL3"
 homepage = "https://github.com/lvaccaro/rust-opentimestamps-client/"
 repository = "https://github.com/lvaccaro/rust-opentimestamps-client/"
 description = "Rust client for OpenTimestamps timestamps"

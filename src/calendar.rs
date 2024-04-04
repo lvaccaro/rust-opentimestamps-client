@@ -1,3 +1,5 @@
+// Copyright (C) 2024 The OpenTimestamps developers
+
 use ots::hex::Hexed;
 use ots::Timestamp;
 use reqwest::header::{ACCEPT, USER_AGENT};
