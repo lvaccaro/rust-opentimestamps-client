@@ -17,14 +17,14 @@ pub enum CliCommand {
     #[clap(long_about = "Timestamp files")]
     Stamp {
         /// Filenames
-        #[clap(name = "files", required = true, num_args = 1.., value_delimiter = ' ', index = 1)]
+        #[clap(name = "files", required = true, num_args = 1.., value_delimiter = ' ')]
         files: Vec<Utf8PathBuf>,
     },
 
     #[clap(long_about = "Upgrade remote calendar timestamps to be locally verifiable")]
     Upgrade {
         /// Existing timestamp(s); moved to FILE.bak
-        #[clap(name = "files", required = true, num_args = 1.., value_delimiter = ' ', index = 1)]
+        #[clap(name = "files", required = true, num_args = 1.., value_delimiter = ' ')]
         files: Vec<Utf8PathBuf>,
     },
 
@@ -41,10 +41,10 @@ pub enum CliCommand {
         #[clap(name = "timestamp", required = true, index = 1)]
         timestamp: Utf8PathBuf,
         /// Specify target file explicitly
-        #[clap(name = "target")]
+        #[clap(name = "target", index = 2)]
         target: Option<Utf8PathBuf>,
         /// Verify a (hex-encoded) digest rather than a file
-        #[clap(name = "digest")]
+        #[clap(name = "digest", index = 3)]
         digest: Option<String>,
     },
 }

@@ -1,7 +1,6 @@
 use ots::hex::Hexed;
 use ots::Timestamp;
 use reqwest::header::{ACCEPT, USER_AGENT};
-use reqwest::Error;
 
 const USER_AGENT_OTS: &str = "Rust-OpenTimestamps-Client/0";
 const ACCEPT_OTS: &str = "application/vnd.opentimestamps.v1";
@@ -11,7 +10,7 @@ pub struct Calendar {
 }
 
 impl Calendar {
-    pub fn submit_calendar(&self, msg: Vec<u8>) -> Result<Timestamp, Error> {
+    pub fn submit_calendar(&self, msg: Vec<u8>) -> Result<Timestamp, reqwest::Error> {
         let url = format!("{}/digest", self.url);
         println!("{:?}", url.clone());
         let res = reqwest::blocking::Client::builder()
@@ -29,7 +28,7 @@ impl Calendar {
         Ok(timestamp)
     }
 
-    pub fn get_timestamp(&self, commitment: Vec<u8>) -> Result<Timestamp, Error> {
+    pub fn get_timestamp(&self, commitment: Vec<u8>) -> Result<Timestamp, reqwest::Error> {
         let url = format!("{}/timestamp/{}", self.url, Hexed(&commitment));
         println!("{:?}", url);
         let res = reqwest::blocking::Client::builder()
