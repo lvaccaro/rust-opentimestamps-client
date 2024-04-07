@@ -42,6 +42,13 @@ impl StepExtension for Step {
             n.merge(b.clone());
         }
         if self.output == b.start_digest {
+            if let Some(next) = self.next.first() {
+                match next.data {
+                    StepData::Fork => {}
+                    StepData::Op(_) => {}
+                    StepData::Attestation(_) => self.next = vec![],
+                }
+            }
             self.next.push(b.first_step.clone());
         }
     }
