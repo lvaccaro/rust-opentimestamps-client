@@ -25,6 +25,7 @@ use ots::ser::DigestType;
 use ots::{op::Op, DetachedTimestampFile};
 use std::io::Write;
 use std::path::Path;
+use std::time::Duration;
 use std::{fs, io::Read};
 
 fn main() {
@@ -41,8 +42,12 @@ fn main() {
 pub(crate) fn handle_command(cli_opts: CliOpts) -> Result<(), Error> {
     let result = match cli_opts.command {
         CliCommand::Info { file } => info(file),
-        CliCommand::Stamp { files } => stamps(files),
-        CliCommand::Upgrade { files } => upgrade(files),
+        CliCommand::Stamp {
+            files,
+            calendar,
+            timeout,
+        } => stamps(files, calendar, timeout),
+        CliCommand::Upgrade { files, calendar } => upgrade(files, calendar),
         CliCommand::Verify {
             target,
             digest,
@@ -71,35 +76,39 @@ fn file_digest(path: Utf8PathBuf, digest_type: DigestType) -> Result<Vec<u8>, Er
     Ok(op.execute(&buffer))
 }
 
-fn stamps(files: Vec<Utf8PathBuf>) -> Result<(), Error> {
+fn stamps(
+    files: Vec<Utf8PathBuf>,
+    calendar_urls: Option<Vec<String>>,
+    timeout: Option<Duration>,
+) -> Result<(), Error> {
     let mut file_digests = vec![];
     let digest_type = DigestType::Sha256;
     for file in files.clone() {
         file_digests.push(file_digest(file, digest_type)?);
     }
-    let timestamps = opentimestamps_client::stamps(file_digests, digest_type)?;
+    let timestamps =
+        opentimestamps_client::stamps(file_digests, digest_type, calendar_urls, timeout)?;
     for (in_file, ots) in files.iter().zip(timestamps) {
         let timestamp_file_path = format!("{}.ots", in_file);
         let file = fs::File::create(timestamp_file_path).map_err(|_| Error::InvalidFile)?;
-        println!("{:?}", ots);
         ots.to_writer(file).map_err(|_| Error::IOError)?;
     }
     Ok(())
 }
 
-fn upgrade(files: Vec<Utf8PathBuf>) -> Result<(), Error> {
+fn upgrade(files: Vec<Utf8PathBuf>, calendar_urls: Option<Vec<String>>) -> Result<(), Error> {
     for file in files {
-        upgrade_file(file)?;
+        upgrade_file(file, calendar_urls.clone())?;
     }
     Ok(())
 }
 
-fn upgrade_file(path: Utf8PathBuf) -> Result<(), Error> {
+fn upgrade_file(path: Utf8PathBuf, calendar_urls: Option<Vec<String>>) -> Result<(), Error> {
     debug!("Upgrading {}", path);
 
     let file = fs::File::open(path.clone()).map_err(|_| Error::InvalidFile)?;
     let mut ots = DetachedTimestampFile::from_reader(file).map_err(|err| Error::InvalidOts(err))?;
-    opentimestamps_client::upgrade(&mut ots)?;
+    opentimestamps_client::upgrade(&mut ots, calendar_urls)?;
 
     let backup_name = format!("{}.bak", path);
     debug!(

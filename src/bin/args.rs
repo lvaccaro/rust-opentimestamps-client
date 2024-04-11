@@ -2,6 +2,7 @@
 
 use camino::Utf8PathBuf;
 use clap::{Parser, Subcommand};
+use std::time::Duration;
 
 /// A liquid wallet with watch-only confidential descriptors and hardware signers.
 /// WARNING: not yet for production use, expect bugs, breaking changes and loss of funds.
@@ -21,6 +22,13 @@ pub enum CliCommand {
         /// Filenames
         #[clap(name = "files", required = true, num_args = 1.., value_delimiter = ' ')]
         files: Vec<Utf8PathBuf>,
+        /// Create timestamp with the aid of a remote calendar. May be specified multiple times.
+        #[clap(name = "calendar_url", short, long)]
+        calendar: Option<Vec<String>>,
+        /// Timeout before giving up on a calendar.
+        #[clap(name = "timeout", short, long)]
+        #[arg(value_parser = parse_duration)]
+        timeout: Option<Duration>,
     },
 
     #[clap(long_about = "Upgrade remote calendar timestamps to be locally verifiable")]
@@ -28,6 +36,9 @@ pub enum CliCommand {
         /// Existing timestamp(s); moved to FILE.bak
         #[clap(name = "files", required = true, num_args = 1.., value_delimiter = ' ')]
         files: Vec<Utf8PathBuf>,
+        /// Override calendars in timestamp
+        #[clap(name = "calendar_url", short, long)]
+        calendar: Option<Vec<String>>,
     },
 
     #[clap(long_about = "Show information on a timestamp")]
@@ -49,4 +60,9 @@ pub enum CliCommand {
         #[clap(name = "digest", index = 3)]
         digest: Option<String>,
     },
+}
+
+fn parse_duration(arg: &str) -> Result<std::time::Duration, std::num::ParseIntError> {
+    let seconds = arg.parse()?;
+    Ok(std::time::Duration::from_secs(seconds))
 }

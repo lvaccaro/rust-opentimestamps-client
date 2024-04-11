@@ -3,6 +3,7 @@
 use ots::hex::Hexed;
 use reqwest::blocking::Response;
 use reqwest::header::{ACCEPT, USER_AGENT};
+use std::time::Duration;
 
 #[allow(dead_code)]
 pub(crate) const APOOL: &str = "https://a.pool.opentimestamps.org";
@@ -18,13 +19,14 @@ const ACCEPT_OTS: &str = "application/vnd.opentimestamps.v1";
 
 pub struct Calendar {
     pub url: String,
+    pub timeout: Option<Duration>,
 }
 
 impl Calendar {
     pub fn submit_calendar(&self, msg: Vec<u8>) -> Result<Response, reqwest::Error> {
         let url = format!("{}/digest", self.url);
-        println!("{:?}", url.clone());
         reqwest::blocking::Client::builder()
+            .timeout(self.timeout.unwrap_or(Duration::from_secs(5)))
             .build()?
             .post(url)
             .header(USER_AGENT, USER_AGENT_OTS)
@@ -35,7 +37,6 @@ impl Calendar {
 
     pub fn get_timestamp(&self, commitment: Vec<u8>) -> Result<Response, reqwest::Error> {
         let url = format!("{}/timestamp/{}", self.url, Hexed(&commitment));
-        println!("{:?}", url);
         reqwest::blocking::Client::builder()
             .build()?
             .get(url)
