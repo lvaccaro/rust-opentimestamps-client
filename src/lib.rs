@@ -1,5 +1,6 @@
 // Copyright (C) 2024 The OpenTimestamps developers
 
+extern crate bitcoincore_rpc;
 extern crate camino;
 extern crate chrono;
 extern crate electrum_client;
@@ -15,6 +16,7 @@ pub mod calendar;
 pub mod error;
 pub mod extensions;
 
+use bitcoincore_rpc::RpcApi;
 use calendar::Calendar;
 use error::Error;
 use extensions::{StepExtension, TimestampExtension};
@@ -70,13 +72,27 @@ impl std::fmt::Display for BitcoinAttestationResult {
     }
 }
 
-pub fn verify(ots: DetachedTimestampFile) -> Result<BitcoinAttestationResult, Error> {
+pub fn verify(
+    ots: DetachedTimestampFile,
+    bitcoin_client: Option<bitcoincore_rpc::Client>,
+) -> Result<BitcoinAttestationResult, Error> {
     let client = Client::new("tcp://electrum.blockstream.info:50001").unwrap();
+
     for attestation in ots.timestamp.all_attestations() {
         match attestation.1 {
             Attestation::Bitcoin { height } => {
-                let block_header = client.block_header(height).unwrap();
-                debug!("Attestation block hash: {:?}", block_header.block_hash());
+                let block_header = match bitcoin_client {
+                    Some(client) => {
+                        let block_hash = client.get_block_hash(height as u64).unwrap();
+                        debug!("Attestation block hash: {:?}", block_hash);
+                        client.get_block_header(&block_hash).unwrap()
+                    }
+                    None => {
+                        let block_header = client.block_header(height).unwrap();
+                        debug!("Attestation block hash: {:?}", block_header.block_hash());
+                        block_header
+                    }
+                };
                 let time =
                     verify_against_blockheader(attestation.0.try_into().unwrap(), block_header)?;
                 let result = BitcoinAttestationResult { height, time };

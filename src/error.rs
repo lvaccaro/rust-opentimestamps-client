@@ -10,6 +10,8 @@ pub enum Error {
     IOError,
     #[error("Invalid file error")]
     InvalidFile,
+    #[error("Bitcoin node error")]
+    BitcoinNodeError,
     // TODO remove into specific errors
     #[error("Generic error {0}")]
     Generic(String),

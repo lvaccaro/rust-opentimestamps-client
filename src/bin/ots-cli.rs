@@ -1,5 +1,6 @@
 // Copyright (C) 2024 The OpenTimestamps developers
 
+extern crate bitcoincore_rpc;
 extern crate camino;
 extern crate chrono;
 extern crate clap;
@@ -15,6 +16,7 @@ extern crate rs_merkle;
 mod args;
 
 use crate::args::*;
+use bitcoincore_rpc::{Auth, Client};
 use camino::Utf8PathBuf;
 use clap::Parser;
 use electrum_client::bitcoin::hex::FromHex;
@@ -52,7 +54,7 @@ pub(crate) fn handle_command(cli_opts: CliOpts) -> Result<(), Error> {
             target,
             digest,
             timestamp,
-        } => verify(target, digest, timestamp),
+        } => verify(target, digest, timestamp, cli_opts.bitcoin),
     };
     result.map_err(|e| e.into())
 }
@@ -131,6 +133,7 @@ fn verify(
     target: Option<Utf8PathBuf>,
     digest: Option<String>,
     timestamp: Utf8PathBuf,
+    bitcoin: Option<BitcoinOpts>,
 ) -> Result<(), Error> {
     let file = fs::File::open(timestamp.clone()).map_err(|_| Error::InvalidFile)?;
     let mut detached_timestamp =
@@ -169,7 +172,22 @@ fn verify(
             return Err(Error::Generic(msg));
         }
     }
-    let attestation = opentimestamps_client::verify(detached_timestamp)?;
+    let bitcoin_client = match bitcoin {
+        Some(opts) => Some(
+            Client::new(
+                opts.bitcoin_node
+                    .unwrap_or("localhost".to_string())
+                    .as_str(),
+                Auth::UserPass(
+                    opts.bitcoin_username.unwrap(),
+                    opts.bitcoin_password.unwrap(),
+                ),
+            )
+            .map_err(|_| Error::BitcoinNodeError)?,
+        ),
+        None => None,
+    };
+    let attestation = opentimestamps_client::verify(detached_timestamp, bitcoin_client)?;
     info!("Success! {}", attestation);
     Ok(())
 }

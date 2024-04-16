@@ -1,14 +1,16 @@
 // Copyright (C) 2024 The OpenTimestamps developers
 
 use camino::Utf8PathBuf;
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 use std::time::Duration;
 
-/// A liquid wallet with watch-only confidential descriptors and hardware signers.
-/// WARNING: not yet for production use, expect bugs, breaking changes and loss of funds.
 #[derive(PartialEq, Clone, Debug, Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct CliOpts {
+    /// The bitcoin options
+    #[clap(flatten)]
+    pub bitcoin: Option<BitcoinOpts>,
+
     /// The sub command
     #[command(subcommand)]
     pub command: CliCommand,
@@ -65,4 +67,17 @@ pub enum CliCommand {
 fn parse_duration(arg: &str) -> Result<std::time::Duration, std::num::ParseIntError> {
     let seconds = arg.parse()?;
     Ok(std::time::Duration::from_secs(seconds))
+}
+
+#[derive(PartialEq, Clone, Debug, Args)]
+pub struct BitcoinOpts {
+    /// Bitcoin node
+    #[clap(long, global = true)]
+    pub bitcoin_node: Option<String>,
+    /// Bitcoin username
+    #[clap(long, global = true)]
+    pub bitcoin_username: Option<String>,
+    /// Bitcoin password
+    #[clap(long, global = true)]
+    pub bitcoin_password: Option<String>,
 }
