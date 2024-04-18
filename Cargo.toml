@@ -1,17 +1,18 @@
 # Copyright (C) 2024 The OpenTimestamps developers
 
 [package]
-name = "opentimestamps_client"
-version = "0.0.1"
-license = "LPGL3"
-homepage = "https://github.com/lvaccaro/rust-opentimestamps-client/"
-repository = "https://github.com/lvaccaro/rust-opentimestamps-client/"
+name = "opentimestamps-cli"
+version = "0.2.0"
+authors = ["Luca Vaccaro <me@lvaccaro.com>"]
 description = "Rust client for OpenTimestamps timestamps"
-
+license-file = "LICENSE.txt"
+repository = "https://github.com/lvaccaro/rust-opentimestamps-client/"
+documentation = "https://docs.rs/crate/opentimestamps-cli"
 keywords = [ "crypto", "bitcoin", "ots", "opentimestamps", "timestamping" ]
+exclude = [ ".github" ]
 
 [lib]
-name = "opentimestamps_client"
+name = "opentimestamps_cli"
 path = "src/lib.rs"
 
 [[bin]]
