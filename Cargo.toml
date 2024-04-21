@@ -12,12 +12,17 @@ keywords = [ "crypto", "bitcoin", "ots", "opentimestamps", "timestamping" ]
 exclude = [ ".github" ]
 
 [lib]
+crate-type = ["staticlib", "cdylib"]
 name = "opentimestamps_cli"
 path = "src/lib.rs"
 
 [[bin]]
 name = "ots-cli"
 path = "src/bin/ots-cli.rs"
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"
 
 [dependencies]
 bitcoin_hashes = "0.12.0"
@@ -40,3 +45,11 @@ chrono-tz = "0.8.6"
 thiserror = "1.0.58"
 #tokio = { version = "1", features = ["full"] }
 
+uniffi = { version = "0.27" }
+uniffi_bindgen = { version = "0.27" }
+
+[build-dependencies]
+uniffi = { version = "0.27", features = ["build"] }
+
+[features]
+default = ["uniffi/cli"]

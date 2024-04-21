@@ -1,0 +1,100 @@
+[Error]
+enum Error {
+  "NetworkError",
+  "InvalidOts",
+  "IOError",
+  "InvalidFile",
+  "BitcoinNodeError",
+  "Generic"
+};
+
+enum DigestType {
+    "Sha1",
+    "Sha256",
+    "Ripemd160"
+};
+
+[Enum]
+interface Op {
+    // crypto (unary) ops
+    Sha1();
+    Sha256();
+    Ripemd160();
+    // unary ops
+    Hexlify();
+    Reverse();
+    // binary ops
+    Append(sequence<u8> data);
+    Prepend(sequence<u8> data);
+};
+
+[Enum]
+interface Attestation {
+    /// An attestation from a Bitcoin blockheader. This consists of a blockheight
+    /// and nothing more, it is expected that the current hash is equal to the
+    /// Merkle root of the block at this height.
+    Bitcoin(u8 height);
+    /// An attestation from some server. It is commented at length in Peter Todd's
+    /// `python-opentimestamps` that the server should be expected to keep anything
+    /// it attests to, forever, and therefore the only thing we store locally is a
+    /// single simple URI with a very restricted charset. (The restricted charset
+    /// seems mainly to be to avoid the software being used for nefarious purposes,
+    /// as it will fetch this URI under some circumstances.)
+    Pending(string uri);
+    /// An unknown attestation that we just store straight
+    Unknown(sequence<u8> tag, sequence<u8> data);
+};
+
+[Enum]
+interface StepData {
+    /// This step splits execution into multiple paths
+    fork();
+    /// This step executes some concrete operation
+    op(Op operation);
+    /// This step asserts an attestation of the current state by some timestamp service
+    attestation(Attestation attestation);
+};
+
+dictionary Step {
+    /// The contents of the step
+    StepData data;
+    /// The output after execution
+    sequence<u8> output;
+    /// A list of steps to execute after this one
+    sequence<Step> next;
+};
+
+dictionary Timestamp {
+  sequence<u8> start_digest;
+  Step first_step;
+};
+
+dictionary DetachedTimestampFile {
+  DigestType digest_type;
+  Timestamp timestamp;
+};
+
+dictionary Duration {
+    u64 secs;
+    u32 nanos; // Always 0 <= nanos < NANOS_PER_SEC
+};
+
+dictionary BitcoinAttestationResult {
+    u16 height;
+    u32 time;
+};
+
+namespace ots {
+
+    [Throws=Error]
+    string info(DetachedTimestampFile ots);
+
+    [Throws=Error]
+    DetachedTimestampFile stamp(sequence<sequence<u8>> digests, DigestType digest_type, sequence<string>? calendar_urls, Duration? duration);
+    
+    [Throws=Error]
+    void upgrade([ByRef] DetachedTimestampFile ots, sequence<string>? calendar_urls);
+
+    [Throws=Error]
+    BitcoinAttestationResult verify(DetachedTimestampFile ots);
+};
