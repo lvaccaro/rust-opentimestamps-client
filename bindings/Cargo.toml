@@ -1,0 +1,31 @@
+# Copyright (C) 2024 The OpenTimestamps developers
+
+[package]
+name = "otsffi"
+version = "0.2.0"
+authors = ["Luca Vaccaro <me@lvaccaro.com>"]
+description = "Rust client bindings for OpenTimestamps timestamps"
+license-file = "LICENSE.txt"
+repository = "https://github.com/lvaccaro/rust-opentimestamps-client/"
+documentation = "https://docs.rs/crate/opentimestamps-cli"
+keywords = [ "crypto", "bitcoin", "ots", "opentimestamps", "timestamping" ]
+exclude = [ ".github" ]
+
+[lib]
+crate-type = ["staticlib", "cdylib", "lib"]
+name = "otsffi"
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"
+
+[dependencies]
+opentimestamps-cli = { path = "../" }
+
+uniffi = { version = "=0.26.1" }
+
+[build-dependencies]
+uniffi = { version = "=0.26.1", features = ["build"] }
+
+[features]
+default = ["uniffi/cli"]

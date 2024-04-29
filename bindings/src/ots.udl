@@ -1,0 +1,36 @@
+//[Error]
+enum OtsError {
+  "NetworkError",
+  "InvalidOts",
+  "IOError",
+  "InvalidFile",
+  "BitcoinNodeError",
+  "Generic"
+};
+
+enum DigestType {
+    "Sha1",
+    "Sha256",
+    "Ripemd160"
+};
+
+
+dictionary BitcoinAttestationResult {
+    u32 height;
+    u32 time;
+};
+
+namespace ots {
+
+    [Throws=OtsError]
+    string info(sequence<u8> ots);
+
+    [Throws=OtsError]
+    sequence<sequence<u8>> stamps(sequence<sequence<u8>> digests, DigestType digest_type, sequence<string>? calendar_urls, u64? timeout);
+    
+    [Throws=OtsError]
+    sequence<u8> upgrade(sequence<u8> ots, sequence<string>? calendar_urls);
+
+    [Throws=OtsError]
+    BitcoinAttestationResult verify(sequence<u8> ots);
+};

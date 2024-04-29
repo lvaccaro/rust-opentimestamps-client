@@ -1,0 +1,6 @@
+framework module otsFFI {
+  umbrella header "otsFFI-umbrella.h"
+
+  export *
+  module * { export * }
+}
