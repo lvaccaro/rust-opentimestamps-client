@@ -1,6 +1,6 @@
 // Copyright (C) 2024 The OpenTimestamps developers
 
-use ots::hex::Hexed;
+use opentimestamps::hex::Hexed;
 use reqwest::blocking::Response;
 use reqwest::header::{ACCEPT, USER_AGENT};
 use std::time::Duration;

@@ -1,6 +1,6 @@
 // Copyright (C) 2024 The OpenTimestamps developers
 
-use ots::{
+use opentimestamps::{
     attestation::Attestation,
     op::Op,
     timestamp::{Step, StepData},
@@ -33,7 +33,7 @@ pub trait StepExtension {
     fn merge(&mut self, b: Timestamp);
     fn roots(&self) -> Vec<&Step>;
     fn cat(&mut self, b: Step);
-    fn cat_new(&mut self, op: ots::op::Op);
+    fn cat_new(&mut self, op: Op);
     fn all_attestations(&self) -> HashMap<Vec<u8>, Attestation>;
 }
 impl StepExtension for Step {

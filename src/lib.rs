@@ -6,7 +6,7 @@ extern crate chrono;
 extern crate electrum_client;
 extern crate env_logger;
 extern crate log;
-extern crate ots;
+extern crate opentimestamps;
 extern crate rand;
 extern crate reqwest;
 extern crate rs_merkle;
@@ -25,9 +25,9 @@ use chrono::DateTime;
 use electrum_client::bitcoin::hashes::Hash;
 use electrum_client::{Client, ElectrumApi};
 use log::{debug, error, info};
-use ots::hex::Hexed;
-use ots::ser::DigestType;
-use ots::{
+use opentimestamps::hex::Hexed;
+use opentimestamps::ser::DigestType;
+use opentimestamps::{
     attestation::Attestation,
     op::Op,
     timestamp::{Step, StepData},
@@ -146,7 +146,7 @@ fn upgrade_timestamp(
     }
     .get_timestamp(commitment.clone())
     .map_err(|err| Error::NetworkError(err))?;
-    let mut deser = ots::ser::Deserializer::new(res);
+    let mut deser = opentimestamps::ser::Deserializer::new(res);
     Timestamp::deserialize(&mut deser, commitment).map_err(|err| Error::InvalidOts(err))
 }
 
@@ -210,16 +210,16 @@ pub fn stamps(
     timeout: Option<Duration>,
 ) -> Result<Vec<DetachedTimestampFile>, Error> {
     let mut merkle_roots: Vec<[u8; 32]> = vec![];
-    let mut file_timestamps: Vec<ots::DetachedTimestampFile> = vec![];
+    let mut file_timestamps: Vec<DetachedTimestampFile> = vec![];
     for digest in digests {
         let random: Vec<u8> = (0..16).map(|_| rand::random::<u8>()).collect();
-        let nonce_op = ots::op::Op::Append(random);
+        let nonce_op = Op::Append(random);
         let nonce_output_digest = nonce_op.execute(&digest);
-        let hash_op = ots::op::Op::Sha256;
+        let hash_op = Op::Sha256;
         let hash_output_digest = hash_op.execute(&nonce_output_digest);
-        let file_timestamp = ots::DetachedTimestampFile {
+        let file_timestamp = DetachedTimestampFile {
             digest_type: digest_type,
-            timestamp: ots::Timestamp {
+            timestamp: Timestamp {
                 start_digest: digest,
                 first_step: Step {
                     data: StepData::Op(nonce_op),
@@ -307,6 +307,6 @@ fn create_timestamp(
     }
     .submit_calendar(stamp.clone())
     .map_err(|err| Error::NetworkError(err))?;
-    let mut deser = ots::ser::Deserializer::new(res);
+    let mut deser = opentimestamps::ser::Deserializer::new(res);
     Timestamp::deserialize(&mut deser, stamp.to_vec()).map_err(|err| Error::InvalidOts(err))
 }

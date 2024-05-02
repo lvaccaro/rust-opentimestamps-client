@@ -5,7 +5,7 @@ pub enum Error {
     #[error("Network error")]
     NetworkError(reqwest::Error),
     #[error("Ots error")]
-    InvalidOts(ots::error::Error),
+    InvalidOts(opentimestamps::error::Error),
     #[error("IO error")]
     IOError,
     #[error("Invalid file error")]
