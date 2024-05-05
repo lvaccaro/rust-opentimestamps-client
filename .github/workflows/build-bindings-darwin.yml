@@ -1,0 +1,32 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request: {}
+  
+name: Build Bindings Darwin
+    
+jobs:
+  build-bindings:
+    runs-on: macOS-latest
+    name: build
+
+    steps:
+      - name: Checkout breez-sdk repo
+        uses: actions/checkout@v4
+        
+      - name: Install rust
+        uses: dtolnay/rust-toolchain@stable
+      - run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - run: cargo install cargo-lipo
+      
+      - name: Build sdk bindings
+        working-directory: bindings/
+        run: make swift-darwin
+
+      - name: Archive release
+        uses: actions/upload-artifact@v3
+        with:
+          name: otsffi-darwin
+          path: |
+            bindings/ffi/swift-darwin
