@@ -1,0 +1,41 @@
+on:
+    push:
+      # Pattern matched against refs/tags
+      tags:        
+        - '*'           # Push events to every tag not containing /
+    workflow_dispatch:
+  
+name: Publish Android Bindings
+jobs:
+  build-package:
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: bindings-android-jniLibs
+          path: bindings/bindings-android/lib/src/main/jniLibs
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: bindings-kotlin
+          path: bindings/bindings-android/lib/src/main/kotlin
+
+      - name: Build Android project
+        working-directory: bindings/bindings-android
+        env:
+          ORG_GRADLE_PROJECT_libraryVersion: ${{ inputs.package-version || '0.2.0' }}
+        run: ./gradlew assemble
+
+      - name: Archive aar
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-release.aar
+          path: bindings/bindings-android/lib/build/outputs/aar/lib-release.aar
+        
+      - name: Publish artifacts
+        working-directory: bindings/bindings-android
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./gradlew publish -PlibraryVersion=${{ inputs.package-version }}

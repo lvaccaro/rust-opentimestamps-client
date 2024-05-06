@@ -21,11 +21,12 @@ path = "uniffi-bindgen.rs"
 
 [dependencies]
 opentimestamps-cli = { path = "../" }
-
-uniffi = { version = "=0.26.1" }
+uniffi = { version = "=0.27.1" }
+uniffi-kotlin-multiplatform = { git = "https://gitlab.com/trixnity/uniffi-kotlin-multiplatform-bindings", rev = "bf48c5fcb153856e3055025a3cbfa56fbf213188" }
+camino = "1.1.1"
 
 [build-dependencies]
-uniffi = { version = "=0.26.1", features = ["build"] }
+uniffi = { version = "=0.27.1", features = ["build"] }
 
 [features]
 default = ["uniffi/cli"]

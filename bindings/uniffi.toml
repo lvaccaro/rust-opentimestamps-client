@@ -2,10 +2,8 @@
 package_name = "org.opentimestamps"
 cdylib_name = "otsffi"
 
-[bindings.python]
-cdylib_name = "otsffi"
-
-[bindings.ruby]
+[bindings.kotlin-native]
+package_name = "org.opentimestamps"
 cdylib_name = "otsffi"
 
 [bindings.swift]

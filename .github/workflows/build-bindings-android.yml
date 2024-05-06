@@ -1,0 +1,46 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request: {}
+  
+name: Build Bindings Android
+    
+jobs:
+  build-bindings:
+    runs-on: ubuntu-latest
+    name: build
+
+    steps:
+      - name: Checkout breez-sdk repo
+        uses: actions/checkout@v4
+        
+      - name: Install rust
+        uses: dtolnay/rust-toolchain@stable
+      - run: rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+      - run: cargo install cargo-ndk
+      
+      - name: Build sdk bindings
+        working-directory: bindings/
+        run: make bindings-android
+
+      - name: Archive release
+        uses: actions/upload-artifact@v3
+        with:
+          name: bindings-android
+          path: |
+             bindings/ffi/kotlin
+             bindings/ffi/android/lib-release.aar
+  
+      - name: Archive jniLibs release
+        uses: actions/upload-artifact@v3
+        with:
+          name: bindings-android-jniLibs
+          path: |
+             bindings/ffi/kotlin/jniLibs
+
+      - name: Archive Kotlin binding
+        uses: actions/upload-artifact@v3
+        with:
+          name: bindings-kotlin
+          path: bindings/ffi/kotlin/org/opentimestamps/ots.kt
