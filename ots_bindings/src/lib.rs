@@ -1,11 +1,11 @@
 extern crate uniffi;
-extern crate opentimestamps_cli;
+extern crate ots_core;
 
 use std::time::Duration;
-use opentimestamps_cli::client::BitcoinAttestationResult;
-use opentimestamps_cli::error::Error as OtsError;
-use opentimestamps_cli::client;
-use opentimestamps_cli::opentimestamps::{
+use ots_core::client::BitcoinAttestationResult;
+use ots_core::error::Error as OtsError;
+use ots_core::client;
+use ots_core::opentimestamps::{
     ser::DigestType,
     DetachedTimestampFile,
 };

@@ -8,10 +8,8 @@ extern crate electrum_client;
 extern crate env_logger;
 extern crate log;
 extern crate opentimestamps;
-extern crate opentimestamps_cli;
+extern crate ots_core;
 extern crate rand;
-extern crate reqwest;
-extern crate rs_merkle;
 
 mod args;
 
@@ -24,7 +22,7 @@ use log::{debug, error, info};
 use opentimestamps::hex::Hexed;
 use opentimestamps::ser::DigestType;
 use opentimestamps::{op::Op, DetachedTimestampFile};
-use opentimestamps_cli::error::Error;
+use ots_core::error::Error;
 use std::io::Write;
 use std::path::Path;
 use std::time::Duration;
@@ -62,7 +60,7 @@ pub(crate) fn handle_command(cli_opts: CliOpts) -> Result<(), Error> {
 fn info(file: Utf8PathBuf) -> Result<(), Error> {
     let fh = fs::File::open(file).map_err(|_| Error::InvalidFile)?;
     let ots = DetachedTimestampFile::from_reader(fh).map_err(|err| Error::InvalidOts(err))?;
-    print!("{}", opentimestamps_cli::client::info(ots)?);
+    print!("{}", ots_core::client::info(ots)?);
     Ok(())
 }
 
@@ -89,7 +87,7 @@ fn stamps(
         file_digests.push(file_digest(file, digest_type)?);
     }
     let timestamps =
-        opentimestamps_cli::client::stamps(file_digests, digest_type, calendar_urls, timeout)?;
+        ots_core::client::stamps(file_digests, digest_type, calendar_urls, timeout)?;
     for (in_file, ots) in files.iter().zip(timestamps) {
         let timestamp_file_path = format!("{}.ots", in_file);
         let file = fs::File::create(timestamp_file_path).map_err(|_| Error::InvalidFile)?;
@@ -110,7 +108,7 @@ fn upgrade_file(path: Utf8PathBuf, calendar_urls: Option<Vec<String>>) -> Result
 
     let file = fs::File::open(path.clone()).map_err(|_| Error::InvalidFile)?;
     let mut ots = DetachedTimestampFile::from_reader(file).map_err(|err| Error::InvalidOts(err))?;
-    opentimestamps_cli::client::upgrade(&mut ots, calendar_urls)?;
+    ots_core::client::upgrade(&mut ots, calendar_urls)?;
 
     let backup_name = format!("{}.bak", path);
     debug!(
@@ -187,7 +185,7 @@ fn verify(
         ),
         None => None,
     };
-    let attestation = opentimestamps_cli::client::verify(detached_timestamp, bitcoin_client)?;
+    let attestation = ots_core::client::verify(detached_timestamp, bitcoin_client)?;
     info!("Success! {}", attestation);
     Ok(())
 }

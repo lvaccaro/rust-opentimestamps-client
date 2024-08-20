@@ -1,43 +1,21 @@
-# Copyright (C) 2024 The OpenTimestamps developers
+[workspace]
 
-[package]
-name = "opentimestamps-cli"
-version = "0.2.0"
-authors = ["Luca Vaccaro <me@lvaccaro.com>"]
-description = "Rust client for OpenTimestamps timestamps"
-license-file = "LICENSE.txt"
-repository = "https://github.com/lvaccaro/rust-opentimestamps-client/"
-documentation = "https://docs.rs/crate/opentimestamps-cli"
-keywords = [ "crypto", "bitcoin", "ots", "opentimestamps", "timestamping" ]
-exclude = [ ".github" ]
+members = [
+    "ots_cli",
+    "ots_core",
+    "ots_bindings"
+]
+resolver = "2"
 
-[lib]
-crate-type = ["staticlib", "cdylib", "lib"]
-name = "opentimestamps_cli"
-path = "src/lib.rs"
+[patch.crates-io]
+ots_cli = { path = "ots_cli" }
+ots_core = { path = "ots_core" }
+ots_bindings = { path = "ots_bindings" }
 
-[[bin]]
-name = "ots-cli"
-path = "src/bin/ots-cli.rs"
-
-[dependencies]
-bitcoin_hashes = "0.12.0"
-env_logger = "0.10"
-log = "0.4"
-opentimestamps = "0.2.0"
-electrum-client = "0.19.0"
-bitcoincore-rpc = "0.18.0"
-
-clap = { version = "~4.4", features = ["derive", "env"] }
-serde_json = "1"
-clap_complete = "~4.4"
-rand = "0.8.5"
-rs_merkle = "1.4"
-
-reqwest = { version = "0.12", features= ["blocking"] }
-camino = "1.1.6"
-chrono = "0.4.37"
-chrono-tz = "0.8.6"
-thiserror = "1.0.58"
-#tokio = { version = "1", features = ["full"] }
-openssl = { version = "0.10.64", features = ["vendored"]}
+[profile.release-smaller]
+inherits = "release"
+opt-level = 'z'      # Optimize for size.
+lto = true           # Enable Link Time Optimization
+codegen-units = 1    # Reduce number of codegen units to increase optimizations.
+panic = "abort"      # Abort on panic
+strip = "debuginfo"  # Partially strip symbols from binary

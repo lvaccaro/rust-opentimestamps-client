@@ -1,0 +1,36 @@
+# Copyright (C) 2024 The OpenTimestamps developers
+
+[package]
+name = "ots_cli"
+version = "0.2.0"
+authors = ["Luca Vaccaro <me@lvaccaro.com>"]
+description = "OpenTimestamps - Command line interface"
+license-file = "LICENSE.txt"
+repository = "https://github.com/lvaccaro/rust-opentimestamps-client/"
+documentation = "https://docs.rs/crate/opentimestamps-cli"
+keywords = [ "crypto", "bitcoin", "ots", "opentimestamps", "timestamping" ]
+exclude = [ ".github" ]
+
+[dependencies]
+ots_core = { version = "0.2.0" }
+
+bitcoin_hashes = "0.12.0"
+env_logger = "0.10"
+log = "0.4"
+opentimestamps = "0.2.0"
+electrum-client = "0.19.0"
+bitcoincore-rpc = "0.18.0"
+
+clap = { version = "~4.4", features = ["derive", "env"] }
+serde_json = "1"
+clap_complete = "~4.4"
+rand = "0.8.5"
+rs_merkle = "1.4"
+
+reqwest = { version = "0.12", features= ["blocking"] }
+camino = "1.1.6"
+chrono = "0.4.37"
+chrono-tz = "0.8.6"
+thiserror = "1.0.58"
+#tokio = { version = "1", features = ["full"] }
+openssl = { version = "0.10.64", features = ["vendored"]}
