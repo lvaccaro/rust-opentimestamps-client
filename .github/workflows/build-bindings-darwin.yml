@@ -18,15 +18,16 @@ jobs:
       - name: Install rust
         uses: dtolnay/rust-toolchain@stable
       - run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
-      - run: cargo install cargo-lipo
+      - run: cargo install cargo-lipo just
+      - run: source env.sh
       
       - name: Build sdk bindings
-        working-directory: bindings/
-        run: make swift-darwin
+        working-directory: ots_bindings/
+        run: just swift-darwin
 
       - name: Archive release
         uses: actions/upload-artifact@v3
         with:
           name: otsffi-darwin
           path: |
-            bindings/ffi/swift-darwin
+            ots_bindings/ffi/swift-darwin

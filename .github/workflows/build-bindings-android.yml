@@ -18,26 +18,27 @@ jobs:
       - name: Install rust
         uses: dtolnay/rust-toolchain@stable
       - run: rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
-      - run: cargo install cargo-ndk
+      - run: cargo install cargo-ndk just
+      - run: source env.sh
       
       - name: Build sdk bindings
-        working-directory: bindings/
-        run: make bindings-android
+        working-directory: ots_bindings/
+        run: just bindings-android
 
       - name: Archive release
         uses: actions/upload-artifact@v3
         with:
           name: bindings-android
           path: |
-             bindings/ffi/kotlin
-             bindings/ffi/android/lib-release.aar
+             ots_bindings/ffi/kotlin
+             ots_bindings/ffi/android/lib-release.aar
   
       - name: Archive jniLibs release
         uses: actions/upload-artifact@v3
         with:
           name: bindings-android-jniLibs
           path: |
-             bindings/ffi/kotlin/jniLibs
+             ots_bindings/ffi/kotlin/jniLibs
 
       - name: Archive Kotlin binding
         uses: actions/upload-artifact@v3

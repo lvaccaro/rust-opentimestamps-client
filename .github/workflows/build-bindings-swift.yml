@@ -19,15 +19,16 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - run: rustup target add aarch64-apple-ios x86_64-apple-ios aarch64-apple-ios-sim
-      - run: cargo install cargo-lipo
+      - run: cargo install cargo-lipo just
+      - run: source env.sh
       
       - name: Build sdk bindings
-        working-directory: bindings/
-        run: make swift
+        working-directory: ots_bindings/
+        run: just swift
 
       - name: Archive release
         uses: actions/upload-artifact@v3
         with:
           name: otsffi-swift
           path: |
-            bindings/swift
+            ots_bindings/swift
