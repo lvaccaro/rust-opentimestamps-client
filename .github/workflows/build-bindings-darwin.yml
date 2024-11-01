@@ -19,7 +19,6 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
       - run: cargo install cargo-lipo just
-      - run: source env.sh
       
       - name: Build sdk bindings
         working-directory: ots_bindings/

@@ -11,7 +11,6 @@ init:
 	cargo install cargo-lipo
 	cargo install cbindgen
 	cargo install cargo-ndk
-	source env.sh
 
 all: swift-ios swift-darwin swift kotlin bindings-android
 
@@ -61,26 +60,22 @@ android: aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64
 
 aarch64-linux-android:
 	cargo ndk -t aarch64-linux-android -o ots_bindings/ffi/kotlin/jniLibs build -p ots_bindings --release
-	cp -a ${NDK_SYSROOT_LIBS_PATH}/libc++_shared.so ots_bindings/ffi/kotlin/jniLibs/arm64-v8a/
 
 armv7-linux-androideabi:
 	cargo ndk -t armv7-linux-androideabi -o ots_bindings/ffi/kotlin/jniLibs build -p ots_bindings --release
-	cp -a ${NDK_SYSROOT_LIBS_PATH}/libc++_shared.so ots_bindings/ffi/kotlin/jniLibs/armeabi-v7a/
 
 i686-linux-android:
 	cargo ndk -t i686-linux-android -o ots_bindings/ffi/kotlin/jniLibs build -p ots_bindings --release
-	cp -a ${NDK_SYSROOT_LIBS_PATH}/libc++_shared.so ots_bindings/ffi/kotlin/jniLibs/x86/
 
 x86_64-linux-android:
 	cargo ndk -t x86_64-linux-android -o ots_bindings/ffi/kotlin/jniLibs build -p ots_bindings --release
-	cp -a ${NDK_SYSROOT_LIBS_PATH}/libc++_shared.so ots_bindings/ffi/kotlin/jniLibs/x86_64/
 
 bindings-android: kotlin
 	cp -r ots_bindings/ffi/kotlin/jniLibs ots_bindings/bindings-android/lib/src/main
 	cp -r ots_bindings/ffi/kotlin/org ots_bindings/bindings-android/lib/src/main/kotlin/
 	cd ots_bindings/bindings-android && ./gradlew assemble
 	mkdir -p ots_bindings/ffi/android
-	cp ots_bindings/bindings-android/lib/build/outputs/aar/lib-release.aar ffi/android
+	cp ots_bindings/bindings-android/lib/build/outputs/aar/lib-release.aar ots_bindings/ffi/android
 
 bindings-kotlin-multiplatform: ios-universal kotlin
 	mkdir -p ots_bindings/bindings-kotlin-multiplatform/ots-kmp/src/androidMain
