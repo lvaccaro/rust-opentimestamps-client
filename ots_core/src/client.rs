@@ -1,8 +1,7 @@
 use bitcoincore_rpc::RpcApi;
-use calendar;
-use calendar::Calendar;
-use error::Error;
-use extensions::{StepExtension, TimestampExtension};
+
+use crate::error::Error;
+use crate::extensions::{StepExtension, TimestampExtension};
 
 use chrono::DateTime;
 use electrum_client::bitcoin::hashes::Hash;
@@ -19,6 +18,12 @@ use opentimestamps::{
 use rs_merkle::{algorithms::Sha256, MerkleTree};
 use std::convert::TryInto;
 use std::time::Duration;
+
+#[cfg(feature = "blocking")]
+use crate::block_calendar::{ APOOL, BPOOL, FINNEY, Calendar};
+
+#[cfg(feature = "async")]
+use crate::async_calendar::{ APOOL, BPOOL, FINNEY, Calendar};
 
 pub fn info(ots: DetachedTimestampFile) -> Result<String, Error> {
     Ok(ots.to_string())
@@ -100,6 +105,55 @@ pub fn verify(
     Err(Error::Generic("No bitcoin attestion found".to_string()))
 }
 
+#[cfg(feature = "async")]
+pub async fn upgrade(
+    ots: &mut DetachedTimestampFile,
+    calendar_urls: Option<Vec<String>>,
+) -> Result<(), Error> {
+    for attestation in ots.timestamp.all_attestations() {
+        match attestation.1 {
+            Attestation::Bitcoin { height: _ } => {}
+            Attestation::Unknown { tag: _, data: _ } => {}
+            Attestation::Pending { ref uri } => {
+                if calendar_urls
+                    .as_ref()
+                    .is_some_and(|urls| !urls.contains(uri))
+                {
+                    error!("No valid calendar found");
+                    continue;
+                }
+                info!("Upgrading to remote calendar {}", uri.to_string());
+                let upgraded = upgrade_timestamp(attestation.0, uri.to_string(), None).await?;
+                ots.timestamp.merge(upgraded);
+            }
+        };
+    }
+    Ok(())
+}
+
+#[cfg(feature = "async")]
+async fn upgrade_timestamp(
+    commitment: Vec<u8>,
+    calendar_url: String,
+    timeout: Option<Duration>,
+) -> Result<Timestamp, Error> {
+    use std::io::Cursor;
+    
+    let res = Calendar {
+        url: calendar_url,
+        timeout: timeout,
+    }
+    .get_timestamp(commitment.clone())
+    .await
+    .map_err(|err| Error::NetworkError(err))?
+    .bytes()
+    .await
+    .map_err(|err| Error::NetworkError(err))?;
+    let mut deser = opentimestamps::ser::Deserializer::new(Cursor::new(res));
+    Timestamp::deserialize(&mut deser, commitment).map_err(|err| Error::InvalidOts(err))
+}
+
+#[cfg(feature = "blocking")]
 pub fn upgrade(
     ots: &mut DetachedTimestampFile,
     calendar_urls: Option<Vec<String>>,
@@ -125,6 +179,7 @@ pub fn upgrade(
     Ok(())
 }
 
+#[cfg(feature = "blocking")]
 fn upgrade_timestamp(
     commitment: Vec<u8>,
     calendar_url: String,
@@ -193,6 +248,123 @@ fn timestamp_from_merkle(
     })
 }
 
+#[cfg(feature = "async")]
+pub async fn stamps(
+    digests: Vec<Vec<u8>>,
+    digest_type: DigestType,
+    calendar_urls: Option<Vec<String>>,
+    timeout: Option<Duration>,
+) -> Result<Vec<DetachedTimestampFile>, Error> {
+    let mut merkle_roots: Vec<[u8; 32]> = vec![];
+    let mut file_timestamps: Vec<DetachedTimestampFile> = vec![];
+    for digest in digests {
+        let random: Vec<u8> = (0..16).map(|_| rand::random::<u8>()).collect();
+        let nonce_op = Op::Append(random);
+        let nonce_output_digest = nonce_op.execute(&digest);
+        let hash_op = Op::Sha256;
+        let hash_output_digest = hash_op.execute(&nonce_output_digest);
+        let file_timestamp = DetachedTimestampFile {
+            digest_type: digest_type,
+            timestamp: Timestamp {
+                start_digest: digest,
+                first_step: Step {
+                    data: StepData::Op(nonce_op),
+                    output: nonce_output_digest,
+                    next: vec![Step {
+                        data: StepData::Op(hash_op),
+                        output: hash_output_digest.clone(),
+                        next: vec![],
+                    }],
+                },
+            },
+        };
+        //let timestamp = file_timestamp.timestamp;
+        file_timestamps.push(file_timestamp.clone());
+        merkle_roots.push(hash_output_digest.try_into().unwrap());
+    }
+    debug!("file_timestamps {}", file_timestamps[0]);
+    debug!("merkle_roots {:?}", merkle_roots.len());
+    for root in merkle_roots.iter() {
+        debug!("{:?}", Hexed(root));
+    }
+    let merkle_tree = MerkleTree::<Sha256>::from_leaves(&merkle_roots);
+    let merkle_tip = merkle_tree.root().unwrap();
+
+    if file_timestamps.len() > 1 {
+        for ft in file_timestamps.iter_mut().enumerate() {
+            if let Ok(timestamp) = timestamp_from_merkle(&merkle_tree, merkle_roots[ft.0]) {
+                ft.1.timestamp.merge(timestamp);
+            }
+        }
+    }
+    let calendar_urls = match calendar_urls {
+        Some(urls) => urls,
+        None => vec![
+            APOOL.to_string(),
+            BPOOL.to_string(),
+            FINNEY.to_string(),
+        ],
+    };
+
+    let mut calendar_timestamps = vec![];
+    for calendar in calendar_urls {
+        info!("Submitting to remote calendar {}", calendar);
+        let calendar_timestamp = create_timestamp(merkle_tip.to_vec(), calendar.clone(), timeout).await;
+        match calendar_timestamp {
+            Ok(timestamp) => calendar_timestamps.push(timestamp),
+            Err(e) => error!("Ignoring remote calendar {}: {}", calendar, e.to_string()),
+        }
+    }
+    if calendar_timestamps.is_empty() {
+        return Err(Error::Generic("No valid calendar found".to_string()));
+    }
+    let timestamp: Timestamp;
+    if calendar_timestamps.len() == 1 {
+        timestamp = calendar_timestamps.first().unwrap().clone();
+    } else {
+        let steps = calendar_timestamps
+            .iter()
+            .map(|x| x.first_step.clone())
+            .collect();
+        let fork = Step {
+            data: StepData::Fork,
+            output: merkle_tip.to_vec(),
+            next: steps,
+        };
+        timestamp = Timestamp {
+            start_digest: merkle_tip.to_vec(),
+            first_step: fork,
+        };
+    }
+    for ft in file_timestamps.iter_mut() {
+        ft.timestamp.merge(timestamp.clone());
+    }
+    Ok(file_timestamps)
+}
+
+#[cfg(feature = "async")]
+async fn create_timestamp(
+    stamp: Vec<u8>,
+    calendar_url: String,
+    timeout: Option<Duration>,
+) -> Result<Timestamp, Error> {
+    use std::io::Cursor;
+
+    let res = Calendar {
+        url: calendar_url,
+        timeout: timeout,
+    }
+    .submit_calendar(stamp.clone())
+    .await
+    .map_err(|err| Error::NetworkError(err))?
+    .bytes()
+    .await
+    .map_err(|err| Error::NetworkError(err))?;
+    let mut deser = opentimestamps::ser::Deserializer::new(Cursor::new(res));
+    Timestamp::deserialize(&mut deser, stamp.to_vec()).map_err(|err| Error::InvalidOts(err))
+}
+
+#[cfg(feature = "blocking")]
 pub fn stamps(
     digests: Vec<Vec<u8>>,
     digest_type: DigestType,
@@ -244,9 +416,9 @@ pub fn stamps(
     let calendar_urls = match calendar_urls {
         Some(urls) => urls,
         None => vec![
-            calendar::APOOL.to_string(),
-            calendar::BPOOL.to_string(),
-            calendar::FINNEY.to_string(),
+            APOOL.to_string(),
+            BPOOL.to_string(),
+            FINNEY.to_string(),
         ],
     };
 
@@ -286,6 +458,7 @@ pub fn stamps(
     Ok(file_timestamps)
 }
 
+#[cfg(feature = "blocking")]
 fn create_timestamp(
     stamp: Vec<u8>,
     calendar_url: String,
