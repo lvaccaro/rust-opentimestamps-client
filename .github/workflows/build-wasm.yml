@@ -1,0 +1,32 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request: {}
+  
+name: Build Wasm
+    
+jobs:
+  build-bindings:
+    runs-on: ubuntu-latest
+    name: build
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        
+      - name: Install rust
+        uses: dtolnay/rust-toolchain@stable
+      - run: rustup target add wasm32-unknown-unknown
+      - run: cargo install wasm-pack
+      
+      - name: Build wasm
+        working-directory: ots_wasm/
+        run: wasm-pack build
+
+      - name: Archive release
+        uses: actions/upload-artifact@v3
+        with:
+          name: wasm
+          path: |
+             ots_wasm/pkg/

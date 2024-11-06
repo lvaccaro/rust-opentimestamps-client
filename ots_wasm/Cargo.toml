@@ -1,0 +1,56 @@
+# Copyright (C) 2024 The OpenTimestamps developers
+
+[package]
+name = "ots_wasm"
+version = "0.2.0"
+authors = ["Luca Vaccaro <me@lvaccaro.com>"]
+description = "Rust client WASM for OpenTimestamps timestamps"
+license-file = "MIT OR BSD-2-Clause"
+repository = "https://github.com/lvaccaro/rust-opentimestamps-client/"
+documentation = "https://docs.rs/crate/opentimestamps-cli"
+keywords = [ "crypto", "bitcoin", "ots", "opentimestamps", "timestamping" ]
+exclude = [ ".github" ]
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+
+electrum-client = { version = "0.21.0", optional = true, default-features=false, features = [
+    "use-rustls-ring",
+    "proxy",
+] }
+
+# wasm
+reqwest = { version = "0.12", optional = true, default-features = false, features = [
+    "charset",
+    "http2",
+    "macos-system-configuration",
+    "json",
+    "rustls-tls",
+] }
+ots_core = { version = "0.2.0", default-features = false, features = ["async"] }
+wasm-bindgen = { version = "0.2.84", features = ["serde-serialize"] }
+wasm-bindgen-futures = { version = "0.4.41" }
+web-sys = { version = "0.3.68", features = ["Window"] }
+js-sys = { version = "0.3.68" }
+serde = { version = "1.0", features = ["derive"] }
+serde-wasm-bindgen = "0.6.3"
+console_error_panic_hook = "0.1.6"
+log = "0.4.22"
+thiserror = "1.0.57"
+hex = "0.4.3"
+
+[target.wasm32-unknown-unknown.dependencies]
+getrandom = { version = "0.2", features = ["js"] }
+ring = { version = "0.17.7", features = ["wasm32_unknown_unknown_js"] }
+web-time = "1.1.0"
+utcnow = "0.2.6"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.13"
+
+[profile.release]
+# Tell `rustc` to optimize for small code size.
+opt-level = "s"

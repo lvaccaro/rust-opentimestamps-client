@@ -1,11 +1,8 @@
-use bitcoincore_rpc::RpcApi;
-
 use crate::error::Error;
 use crate::extensions::{StepExtension, TimestampExtension};
 
+use bitcoin_hashes::Hash;
 use chrono::DateTime;
-use electrum_client::bitcoin::hashes::Hash;
-use electrum_client::{Client, ElectrumApi};
 use log::{debug, error, info};
 use opentimestamps::hex::Hexed;
 use opentimestamps::ser::DigestType;
@@ -19,24 +16,14 @@ use rs_merkle::{algorithms::Sha256, MerkleTree};
 use std::convert::TryInto;
 use std::time::Duration;
 
-#[cfg(feature = "blocking")]
+#[cfg(all(feature = "blocking", not(feature = "async")))]
 use crate::block_calendar::{ APOOL, BPOOL, FINNEY, Calendar};
 
-#[cfg(feature = "async")]
+#[cfg(all(feature = "async", not(feature = "blocking")))]
 use crate::async_calendar::{ APOOL, BPOOL, FINNEY, Calendar};
 
 pub fn info(ots: DetachedTimestampFile) -> Result<String, Error> {
     Ok(ots.to_string())
-}
-/// Verify attestation against a block header
-fn verify_against_blockheader(
-    digest: [u8; 32],
-    block_header: electrum_client::bitcoin::block::Header,
-) -> Result<u32, Error> {
-    if digest != block_header.merkle_root.to_byte_array() {
-        return Err(Error::Generic("Merkle root mismatch".to_string()));
-    }
-    Ok(block_header.time)
 }
 
 fn timestamp_to_date(timestamp: i64) -> String {
@@ -61,11 +48,17 @@ impl std::fmt::Display for BitcoinAttestationResult {
     }
 }
 
+#[cfg(all(feature = "blocking", not(feature = "async")))]
 pub fn verify(
     ots: DetachedTimestampFile,
     bitcoin_client: Option<bitcoincore_rpc::Client>,
 ) -> Result<BitcoinAttestationResult, Error> {
-    let client = Client::new("tcp://electrum.blockstream.info:50001").unwrap();
+
+    use crate::electrum_client::ElectrumApi;
+    use bitcoincore_rpc::bitcoin::hashes::Hash;
+    use bitcoincore_rpc::RpcApi;
+    
+    let electrum_client = electrum_client::Client::new("tcp://electrum.blockstream.info:50001").unwrap();
 
     for attestation in ots.timestamp.all_attestations() {
         match attestation.1 {
@@ -77,13 +70,17 @@ pub fn verify(
                         client.get_block_header(&block_hash).unwrap()
                     }
                     None => {
-                        let block_header = client.block_header(height).unwrap();
-                        debug!("Attestation block hash: {:?}", block_header.block_hash());
+                        let block_header = electrum_client.block_header(height).unwrap();
+                        debug!("Attestation block hash: {:?}", block_header);
                         block_header
                     }
                 };
-                let time =
-                    verify_against_blockheader(attestation.0.try_into().unwrap(), block_header)?;
+                let att = bitcoin_hashes::sha256d::Hash::from_slice(&attestation.0).unwrap();
+                let att = electrum_client::bitcoin::hashes::sha256d::Hash::from_slice(&attestation.0).unwrap();
+                if att != block_header.merkle_root.to_raw_hash() {
+                    return Err(Error::Generic("Merkle root mismatch".to_string()));
+                }
+                let time = block_header.time;
                 let result = BitcoinAttestationResult {
                     height: height.try_into().unwrap(),
                     time,
@@ -105,7 +102,46 @@ pub fn verify(
     Err(Error::Generic("No bitcoin attestion found".to_string()))
 }
 
-#[cfg(feature = "async")]
+#[cfg(all(feature = "async", not(feature = "blocking")))]
+pub async fn verify(
+    ots: DetachedTimestampFile,
+    _bitcoin_client: Option<bitcoincore_rpc::Client>,
+) -> Result<BitcoinAttestationResult, Error> {
+
+    let builder = esplora_client::Builder::new("https://blockstream.info/api");
+    let client = builder.build_async().unwrap();
+
+    for attestation in ots.timestamp.all_attestations() {
+        match attestation.1 {
+            Attestation::Bitcoin { height } => {
+                let block_hash = client.get_block_hash(height as u32).await.unwrap();
+                let block_header = client.get_header_by_hash(&block_hash).await.unwrap();
+                let att = bitcoin_hashes::sha256d::Hash::from_slice(&attestation.0).unwrap();
+                if att != block_header.merkle_root.to_raw_hash() {
+                    return Err(Error::Generic("Merkle root mismatch".to_string()));
+                } 
+                let result = BitcoinAttestationResult {
+                    height: height.try_into().unwrap(),
+                    time: block_header.time
+                };
+                info!("Success! {}", result);
+                return Ok(BitcoinAttestationResult {
+                    height: height.try_into().unwrap(),
+                    time: block_header.time
+                });
+            }
+            Attestation::Pending { uri } => {
+                debug!("Ignoring Pending Attestation at {:?}", uri);
+            }
+            Attestation::Unknown { tag: _, data: _ } => {
+                debug!("Ignoring Unknown Attestation");
+            }
+        };
+    }
+    Err(Error::Generic("No bitcoin attestion found".to_string()))
+}
+
+#[cfg(all(feature = "async", not(feature = "blocking")))]
 pub async fn upgrade(
     ots: &mut DetachedTimestampFile,
     calendar_urls: Option<Vec<String>>,
@@ -131,7 +167,7 @@ pub async fn upgrade(
     Ok(())
 }
 
-#[cfg(feature = "async")]
+#[cfg(all(feature = "async", not(feature = "blocking")))]
 async fn upgrade_timestamp(
     commitment: Vec<u8>,
     calendar_url: String,
@@ -153,7 +189,7 @@ async fn upgrade_timestamp(
     Timestamp::deserialize(&mut deser, commitment).map_err(|err| Error::InvalidOts(err))
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(all(feature = "blocking", not(feature = "async")))]
 pub fn upgrade(
     ots: &mut DetachedTimestampFile,
     calendar_urls: Option<Vec<String>>,
@@ -179,7 +215,7 @@ pub fn upgrade(
     Ok(())
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(all(feature = "blocking", not(feature = "async")))]
 fn upgrade_timestamp(
     commitment: Vec<u8>,
     calendar_url: String,
@@ -248,7 +284,7 @@ fn timestamp_from_merkle(
     })
 }
 
-#[cfg(feature = "async")]
+#[cfg(all(feature = "async", not(feature = "blocking")))]
 pub async fn stamps(
     digests: Vec<Vec<u8>>,
     digest_type: DigestType,
@@ -342,7 +378,7 @@ pub async fn stamps(
     Ok(file_timestamps)
 }
 
-#[cfg(feature = "async")]
+#[cfg(all(feature = "async", not(feature = "blocking")))]
 async fn create_timestamp(
     stamp: Vec<u8>,
     calendar_url: String,
@@ -364,7 +400,7 @@ async fn create_timestamp(
     Timestamp::deserialize(&mut deser, stamp.to_vec()).map_err(|err| Error::InvalidOts(err))
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(all(feature = "blocking", not(feature = "async")))]
 pub fn stamps(
     digests: Vec<Vec<u8>>,
     digest_type: DigestType,
@@ -458,7 +494,7 @@ pub fn stamps(
     Ok(file_timestamps)
 }
 
-#[cfg(feature = "blocking")]
+#[cfg(all(feature = "blocking", not(feature = "async")))]
 fn create_timestamp(
     stamp: Vec<u8>,
     calendar_url: String,

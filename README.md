@@ -41,3 +41,15 @@ You could get an async version of the OTS library enabling the `async` feature a
 ```shell
 cargo build -p ots_core --features=async --no-default-features
 ```
+
+### Build Wasm
+To build OTS in wasm for browser platform:
+```shell
+cd ./ots_wasm
+wasm-pack build --dev
+```
+An web example is available at `http://localhost:8080/`:
+```shell
+cd ./ots_wasm/www
+npm run start
+```

@@ -19,15 +19,14 @@ path = "src/lib.rs"
 
 [features]
 default = ["blocking"]
-async = []
-blocking = ["reqwest/blocking"]
+async = ["esplora-client"]
+blocking = ["electrum-client", "reqwest/blocking"]
 
 [dependencies]
-bitcoin_hashes = "0.12.0"
+bitcoin_hashes = "0.14.0"
 env_logger = "0.10"
 log = "0.4"
 opentimestamps = "0.2.0"
-electrum-client = "0.19.0"
 bitcoincore-rpc = "0.18.0"
 serde_json = "1"
 rand = "0.8.5"
@@ -36,3 +35,9 @@ reqwest = { version = "0.12", features = ["native-tls-vendored"] }
 chrono = "0.4.37"
 chrono-tz = "0.8.6"
 thiserror = "1.0.58"
+
+
+electrum-client = { version = "0.19.0", optional = true }
+esplora-client = { version = "0.10.0", optional = true, default-features=false, features = [
+    "async-https-rustls"
+]}

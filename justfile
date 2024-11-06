@@ -17,9 +17,9 @@ all: swift-ios swift-darwin swift kotlin bindings-android
 ios-universal:
 	mkdir -p ./target/ios-universal/release
 	mkdir -p ./target/ios-universal-sim/release
-	cargo build --release --target aarch64-apple-ios ;\
-	cargo build --release --target x86_64-apple-ios ;\
-	cargo build --release --target aarch64-apple-ios-sim ;\
+	cargo build -p ots_bindings --release --target aarch64-apple-ios ;\
+	cargo build -p ots_bindings --release --target x86_64-apple-ios ;\
+	cargo build -p ots_bindings --release --target aarch64-apple-ios-sim ;\
 	# build universal lib for arm device and x86 sim
 	lipo -create -output ./target/ios-universal/release/libotsffi.a ./target/aarch64-apple-ios/release/libotsffi.a ./target/x86_64-apple-ios/release/libotsffi.a
 	# build universal lib for arm sim and x86 sim
@@ -33,18 +33,18 @@ darwin-universal:
 	lipo -create -output ./target/darwin-universal/release/libotsffi.a ./target/aarch64-apple-darwin/release/libotsffi.a ./target/x86_64-apple-darwin/release/libotsffi.a
 
 swift-ios: ios-universal
-	cargo run --features=uniffi/cli --bin uniffi-bindgen generate ots_bindings/src/ots.udl -l swift -o ots_bindings/ffi/swift-ios
+	cargo run -p ots_bindings --features=uniffi/cli --bin uniffi-bindgen generate ots_bindings/src/ots.udl -l swift -o ots_bindings/ffi/swift-ios
 	cp ./target/ios-universal/release/libotsffi.a ots_bindings/ffi/swift-ios
 	cd ots_bindings/ffi/swift-ios && "swiftc" "-emit-module" "-module-name" "otsffi"  "-Xcc" -fmodule-map-file=$(pwd)/otsFFI.modulemap "-I" "."  "-L" "." "-lotsffi" ots.swift
 
 swift-darwin: darwin-universal
-	cargo run --features=uniffi/cli --bin uniffi-bindgen generate ots_bindings/src/ots.udl -l swift -o ots_bindings/ffi/swift-darwin
+	cargo run -p ots_bindings --features=uniffi/cli --bin uniffi-bindgen generate ots_bindings/src/ots.udl -l swift -o ots_bindings/ffi/swift-darwin
 	cp ./target/darwin-universal/release/libotsffi.dylib ots_bindings/ffi/swift-darwin
 	cd ots_bindings/ffi/swift-darwin && "swiftc" "-emit-module" "-module-name" "otsffi"  "-Xcc" -fmodule-map-file=$(pwd)/otsFFI.modulemap "-I" "."  "-L" "." "-lotsffi" ots.swift
 
 swift: ios-universal darwin-universal
 	mkdir -p swift/Sources/Opentimestamps
-	cargo run --features=uniffi/cli --bin uniffi-bindgen generate ots_bindings/src/ots.udl --no-format --language swift --out-dir ots_bindings/swift/Sources/Opentimestamps
+	cargo run -p ots_bindings --features=uniffi/cli --bin uniffi-bindgen generate ots_bindings/src/ots.udl --no-format --language swift --out-dir ots_bindings/swift/Sources/Opentimestamps
 	mv ots_bindings/swift/Sources/Opentimestamps/ots.swift ots_bindings/swift/Sources/Opentimestamps/otsFFI.swift
 	cp ots_bindings/swift/Sources/Opentimestamps/otsFFI.h ots_bindings/swift/otsFFI.xcframework/ios-arm64/otsFFI.framework/Headers
 	cp ots_bindings/swift/Sources/Opentimestamps/otsFFI.h ots_bindings/swift/otsFFI.xcframework/ios-arm64_x86_64-simulator/otsFFI.framework/Headers
@@ -54,7 +54,7 @@ swift: ios-universal darwin-universal
 	cp ./target/darwin-universal/release/libotsffi.a ots_bindings/swift/otsFFI.xcframework/macos-arm64_x86_64/otsFFI.framework/otsFFI
 
 kotlin: android
-	cargo run --features=uniffi/cli --bin uniffi-bindgen generate ots_bindings/src/ots.udl --language kotlin -o ots_bindings/ffi/kotlin
+	cargo run -p ots_bindings --features=uniffi/cli --bin uniffi-bindgen generate ots_bindings/src/ots.udl --language kotlin -o ots_bindings/ffi/kotlin
 
 android: aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
 

@@ -16,4 +16,4 @@ jobs:
         - name: Checkout
           uses: actions/checkout@v4
         - uses: dtolnay/rust-toolchain@stable
-        - run: cargo build
+        - run: cargo build -p ots_cli

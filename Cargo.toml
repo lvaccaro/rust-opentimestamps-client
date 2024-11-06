@@ -3,7 +3,8 @@
 members = [
     "ots_cli",
     "ots_core",
-    "ots_bindings"
+    "ots_bindings",
+    "ots_wasm"
 ]
 resolver = "2"
 
@@ -11,6 +12,7 @@ resolver = "2"
 ots_cli = { path = "ots_cli" }
 ots_core = { path = "ots_core" }
 ots_bindings = { path = "ots_bindings" }
+ots_wasm = { path = "ots_wasm" }
 
 [profile.release-smaller]
 inherits = "release"
