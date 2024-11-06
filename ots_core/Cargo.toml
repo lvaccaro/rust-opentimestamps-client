@@ -10,11 +10,17 @@ repository = "https://github.com/lvaccaro/rust-opentimestamps-client/"
 documentation = "https://docs.rs/crate/opentimestamps-cli"
 keywords = [ "crypto", "bitcoin", "ots", "opentimestamps", "timestamping" ]
 exclude = [ ".github" ]
+edition = "2021"
 
 [lib]
 crate-type = ["staticlib", "cdylib", "lib"]
 name = "ots_core"
 path = "src/lib.rs"
+
+[features]
+default = ["blocking"]
+async = []
+blocking = ["reqwest/blocking"]
 
 [dependencies]
 bitcoin_hashes = "0.12.0"
@@ -23,17 +29,10 @@ log = "0.4"
 opentimestamps = "0.2.0"
 electrum-client = "0.19.0"
 bitcoincore-rpc = "0.18.0"
-
-clap = { version = "~4.4", features = ["derive", "env"] }
 serde_json = "1"
-clap_complete = "~4.4"
 rand = "0.8.5"
 rs_merkle = "1.4"
-
-reqwest = { version = "0.12", features= ["blocking"] }
-camino = "1.1.6"
+reqwest = { version = "0.12", features = ["native-tls-vendored"] }
 chrono = "0.4.37"
 chrono-tz = "0.8.6"
 thiserror = "1.0.58"
-#tokio = { version = "1", features = ["full"] }
-openssl = { version = "0.10.66", features = ["vendored"]}

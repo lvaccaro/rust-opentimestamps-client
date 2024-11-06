@@ -9,7 +9,6 @@ extern crate env_logger;
 extern crate log;
 extern crate opentimestamps;
 extern crate ots_core;
-extern crate rand;
 
 mod args;
 

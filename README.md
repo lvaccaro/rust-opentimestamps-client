@@ -3,3 +3,41 @@
 Client library and Cli to create and validate timestamp proofs with the OpenTimestamps protocol, written in Rust. 
 
 Based on [rust-opentimestamps](https://github.com/opentimestamps/rust-opentimestamps) and [opentimestamps-client](https://github.com/opentimestamps/opentimestamps-client).
+
+### Command line tool
+Build
+```shell
+cargo install --path ots_cli
+```
+
+Run
+```shell
+ots_cli help
+OpenTimestamps - Command line interface
+
+Usage: ots_cli [OPTIONS] <COMMAND>
+
+Commands:
+  stamp    Timestamp files
+  upgrade  Upgrade remote calendar timestamps to be locally verifiable
+  info     Show information on a timestamp
+  verify   Verify a timestamp
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+      --bitcoin-node <BITCOIN_NODE>          Bitcoin node
+      --bitcoin-username <BITCOIN_USERNAME>  Bitcoin username
+      --bitcoin-password <BITCOIN_PASSWORD>  Bitcoin password
+  -h, --help                                 Print help
+  -V, --version                              Print version
+```
+
+### Build features
+Ots library is compiled by default with `blocking` feature, which enable `reqwest/blocking`.
+```shell
+cargo build
+```
+You could get an async version of the OTS library enabling the `async` feature and disable defaults.
+```shell
+cargo build -p ots_core --features=async --no-default-features
+```
