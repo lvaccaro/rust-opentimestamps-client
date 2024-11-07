@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <title>OpenTimestamps client in the browser</title>
+  <meta name="description" content="A proof of concept of the OpenTimestamps client running in the browser.">
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+  <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
+  <script src="./bootstrap.js"></script>
+
+  <p>
+    This is a proof of concept of <a href="https://github.com/lvaccaro/rust-opentimestamps-client">OpenTimestamps client</a> running in
+    the browser via WASM.
+  </p>
+  <p>
+    Scan a OpenTimestamps proof and dump the metadata.
+  </p>
+
+  <div>
+    <label for="ots">Digest</label>
+    <br />
+    <textarea id="digest-text" name="ots" rows="4"
+      cols="80">09ffc2ceafbf570ad0b337bbcd84a7357ceb85d2f0dec64275d527515ba937a2</textarea>
+  </div>
+
+  <button disabled id="stamp-button" type="button">Scan</button>
+
+  <div>
+    <label for="ots">OTS:</label>
+    <br />
+    <textarea id="ots-text" name="ots" rows="4"
+      cols="80"></textarea>
+  </div>
+
+  <button disabled id="info-button" type="button">Scan</button>
+
+  <p>
+    Info:
+
+  <div id="info" style="word-break: break-word;"></div>
+  </p>
+
+
+</body>
+
+</html>

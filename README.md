@@ -4,7 +4,7 @@ Client library and Cli to create and validate timestamp proofs with the OpenTime
 
 Based on [rust-opentimestamps](https://github.com/opentimestamps/rust-opentimestamps) and [opentimestamps-client](https://github.com/opentimestamps/opentimestamps-client).
 
-### Command line tool
+## Command line tool
 Build
 ```shell
 cargo install --path ots_cli
@@ -32,12 +32,38 @@ Options:
   -V, --version                              Print version
 ```
 
-### Build features
+## Build OTS library 
+
+### Rust
 Ots library is compiled by default with `blocking` feature, which enable `reqwest/blocking`.
 ```shell
-cargo build
+cargo build -p ots_core
 ```
 You could get an async version of the OTS library enabling the `async` feature and disable defaults.
 ```shell
 cargo build -p ots_core --features=async --no-default-features
+```
+### Android kotlin bindings
+Build OTS in Android kotlin bindings:
+```shell
+just bindings-android
+```
+
+### Swift bindings
+Build OTS in Swift for iPhone and Darwin:
+```shell
+just swift-ios
+just swift-darwin
+```
+
+### Wasm
+Build OTS in wasm for browser platform:
+```shell
+cd ./ots_wasm
+wasm-pack build --dev
+```
+An web example is available at `http://localhost:8080/`:
+```shell
+cd ./ots_wasm/www
+npm run start
 ```
