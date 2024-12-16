@@ -17,10 +17,10 @@ use std::convert::TryInto;
 use std::time::Duration;
 
 #[cfg(not(feature = "async"))]
-use crate::block_calendar::{ APOOL, BPOOL, FINNEY, Calendar};
+use crate::block_calendar::{Calendar, APOOL, BPOOL, FINNEY};
 
 #[cfg(feature = "async")]
-use crate::async_calendar::{ APOOL, BPOOL, FINNEY, Calendar};
+use crate::async_calendar::{Calendar, APOOL, BPOOL, FINNEY};
 
 pub fn info(ots: DetachedTimestampFile) -> Result<String, Error> {
     Ok(ots.to_string())
@@ -53,12 +53,12 @@ pub fn verify(
     ots: DetachedTimestampFile,
     bitcoin_client: Option<bitcoincore_rpc::Client>,
 ) -> Result<BitcoinAttestationResult, Error> {
-
     use crate::electrum_client::ElectrumApi;
     use bitcoincore_rpc::bitcoin::hashes::Hash;
     use bitcoincore_rpc::RpcApi;
-    
-    let electrum_client = electrum_client::Client::new("tcp://electrum.blockstream.info:50001").unwrap();
+
+    let electrum_client =
+        electrum_client::Client::new("tcp://electrum.blockstream.info:50001").unwrap();
 
     for attestation in ots.timestamp.all_attestations() {
         match attestation.1 {
@@ -76,7 +76,9 @@ pub fn verify(
                     }
                 };
                 let att = bitcoin_hashes::sha256d::Hash::from_slice(&attestation.0).unwrap();
-                let att = electrum_client::bitcoin::hashes::sha256d::Hash::from_slice(&attestation.0).unwrap();
+                let att =
+                    electrum_client::bitcoin::hashes::sha256d::Hash::from_slice(&attestation.0)
+                        .unwrap();
                 if att != block_header.merkle_root.to_raw_hash() {
                     return Err(Error::Generic("Merkle root mismatch".to_string()));
                 }
@@ -107,7 +109,6 @@ pub async fn verify(
     ots: DetachedTimestampFile,
     _bitcoin_client: Option<bitcoincore_rpc::Client>,
 ) -> Result<BitcoinAttestationResult, Error> {
-
     let builder = esplora_client::Builder::new("https://blockstream.info/api");
     let client = builder.build_async().unwrap();
 
@@ -119,15 +120,15 @@ pub async fn verify(
                 let att = bitcoin_hashes::sha256d::Hash::from_slice(&attestation.0).unwrap();
                 if att != block_header.merkle_root.to_raw_hash() {
                     return Err(Error::Generic("Merkle root mismatch".to_string()));
-                } 
+                }
                 let result = BitcoinAttestationResult {
                     height: height.try_into().unwrap(),
-                    time: block_header.time
+                    time: block_header.time,
                 };
                 info!("Success! {}", result);
                 return Ok(BitcoinAttestationResult {
                     height: height.try_into().unwrap(),
-                    time: block_header.time
+                    time: block_header.time,
                 });
             }
             Attestation::Pending { uri } => {
@@ -174,7 +175,7 @@ async fn upgrade_timestamp(
     timeout: Option<Duration>,
 ) -> Result<Timestamp, Error> {
     use std::io::Cursor;
-    
+
     let res = Calendar {
         url: calendar_url,
         timeout: timeout,
@@ -335,17 +336,14 @@ pub async fn stamps(
     }
     let calendar_urls = match calendar_urls {
         Some(urls) => urls,
-        None => vec![
-            APOOL.to_string(),
-            BPOOL.to_string(),
-            FINNEY.to_string(),
-        ],
+        None => vec![APOOL.to_string(), BPOOL.to_string(), FINNEY.to_string()],
     };
 
     let mut calendar_timestamps = vec![];
     for calendar in calendar_urls {
         info!("Submitting to remote calendar {}", calendar);
-        let calendar_timestamp = create_timestamp(merkle_tip.to_vec(), calendar.clone(), timeout).await;
+        let calendar_timestamp =
+            create_timestamp(merkle_tip.to_vec(), calendar.clone(), timeout).await;
         match calendar_timestamp {
             Ok(timestamp) => calendar_timestamps.push(timestamp),
             Err(e) => error!("Ignoring remote calendar {}: {}", calendar, e.to_string()),
@@ -451,11 +449,7 @@ pub fn stamps(
     }
     let calendar_urls = match calendar_urls {
         Some(urls) => urls,
-        None => vec![
-            APOOL.to_string(),
-            BPOOL.to_string(),
-            FINNEY.to_string(),
-        ],
+        None => vec![APOOL.to_string(), BPOOL.to_string(), FINNEY.to_string()],
     };
 
     let mut calendar_timestamps = vec![];

@@ -1,8 +1,8 @@
 // Copyright (C) 2024 The OpenTimestamps developers
 
 use opentimestamps::hex::Hexed;
-use reqwest::Response;
 use reqwest::header::{ACCEPT, CONTENT_TYPE};
+use reqwest::Response;
 use std::time::Duration;
 
 #[allow(dead_code)]

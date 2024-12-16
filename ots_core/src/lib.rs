@@ -1,7 +1,7 @@
 // Copyright (C) 2024 The OpenTimestamps developers
 
-extern crate bitcoincore_rpc;
 extern crate bitcoin_hashes;
+extern crate bitcoincore_rpc;
 extern crate chrono;
 extern crate env_logger;
 extern crate log;
@@ -14,7 +14,6 @@ extern crate thiserror;
 pub mod client;
 pub mod error;
 pub mod extensions;
-
 
 #[cfg(not(feature = "async"))]
 extern crate electrum_client;
