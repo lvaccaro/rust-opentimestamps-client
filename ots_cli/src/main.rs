@@ -85,8 +85,7 @@ fn stamps(
     for file in files.clone() {
         file_digests.push(file_digest(file, digest_type)?);
     }
-    let timestamps =
-        ots_core::client::stamps(file_digests, digest_type, calendar_urls, timeout)?;
+    let timestamps = ots_core::client::stamps(file_digests, digest_type, calendar_urls, timeout)?;
     for (in_file, ots) in files.iter().zip(timestamps) {
         let timestamp_file_path = format!("{}.ots", in_file);
         let file = fs::File::create(timestamp_file_path).map_err(|_| Error::InvalidFile)?;

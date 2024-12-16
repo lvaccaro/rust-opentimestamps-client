@@ -13,7 +13,7 @@ exclude = [ ".github" ]
 edition = "2021"
 
 [dependencies]
-ots_core = { version = "0.2.0" }
+ots_core = { version = "0.2.0"}
 bitcoin_hashes = "0.12.0"
 bitcoincore-rpc = "0.18.0"
 env_logger = "0.10"

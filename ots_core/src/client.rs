@@ -16,11 +16,11 @@ use rs_merkle::{algorithms::Sha256, MerkleTree};
 use std::convert::TryInto;
 use std::time::Duration;
 
-#[cfg(all(feature = "blocking", not(feature = "async")))]
-use crate::block_calendar::{ APOOL, BPOOL, FINNEY, Calendar};
+#[cfg(not(feature = "async"))]
+use crate::block_calendar::{Calendar, APOOL, BPOOL, FINNEY};
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
-use crate::async_calendar::{ APOOL, BPOOL, FINNEY, Calendar};
+#[cfg(feature = "async")]
+use crate::async_calendar::{Calendar, APOOL, BPOOL, FINNEY};
 
 pub fn info(ots: DetachedTimestampFile) -> Result<String, Error> {
     Ok(ots.to_string())
@@ -48,17 +48,17 @@ impl std::fmt::Display for BitcoinAttestationResult {
     }
 }
 
-#[cfg(all(feature = "blocking", not(feature = "async")))]
+#[cfg(not(feature = "async"))]
 pub fn verify(
     ots: DetachedTimestampFile,
     bitcoin_client: Option<bitcoincore_rpc::Client>,
 ) -> Result<BitcoinAttestationResult, Error> {
-
     use crate::electrum_client::ElectrumApi;
     use bitcoincore_rpc::bitcoin::hashes::Hash;
     use bitcoincore_rpc::RpcApi;
-    
-    let electrum_client = electrum_client::Client::new("tcp://electrum.blockstream.info:50001").unwrap();
+
+    let electrum_client =
+        electrum_client::Client::new("tcp://electrum.blockstream.info:50001").unwrap();
 
     for attestation in ots.timestamp.all_attestations() {
         match attestation.1 {
@@ -76,7 +76,9 @@ pub fn verify(
                     }
                 };
                 let att = bitcoin_hashes::sha256d::Hash::from_slice(&attestation.0).unwrap();
-                let att = electrum_client::bitcoin::hashes::sha256d::Hash::from_slice(&attestation.0).unwrap();
+                let att =
+                    electrum_client::bitcoin::hashes::sha256d::Hash::from_slice(&attestation.0)
+                        .unwrap();
                 if att != block_header.merkle_root.to_raw_hash() {
                     return Err(Error::Generic("Merkle root mismatch".to_string()));
                 }
@@ -102,12 +104,11 @@ pub fn verify(
     Err(Error::Generic("No bitcoin attestion found".to_string()))
 }
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
+#[cfg(feature = "async")]
 pub async fn verify(
     ots: DetachedTimestampFile,
     _bitcoin_client: Option<bitcoincore_rpc::Client>,
 ) -> Result<BitcoinAttestationResult, Error> {
-
     let builder = esplora_client::Builder::new("https://blockstream.info/api");
     let client = builder.build_async().unwrap();
 
@@ -119,15 +120,15 @@ pub async fn verify(
                 let att = bitcoin_hashes::sha256d::Hash::from_slice(&attestation.0).unwrap();
                 if att != block_header.merkle_root.to_raw_hash() {
                     return Err(Error::Generic("Merkle root mismatch".to_string()));
-                } 
+                }
                 let result = BitcoinAttestationResult {
                     height: height.try_into().unwrap(),
-                    time: block_header.time
+                    time: block_header.time,
                 };
                 info!("Success! {}", result);
                 return Ok(BitcoinAttestationResult {
                     height: height.try_into().unwrap(),
-                    time: block_header.time
+                    time: block_header.time,
                 });
             }
             Attestation::Pending { uri } => {
@@ -141,7 +142,7 @@ pub async fn verify(
     Err(Error::Generic("No bitcoin attestion found".to_string()))
 }
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
+#[cfg(feature = "async")]
 pub async fn upgrade(
     ots: &mut DetachedTimestampFile,
     calendar_urls: Option<Vec<String>>,
@@ -167,14 +168,14 @@ pub async fn upgrade(
     Ok(())
 }
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
+#[cfg(feature = "async")]
 async fn upgrade_timestamp(
     commitment: Vec<u8>,
     calendar_url: String,
     timeout: Option<Duration>,
 ) -> Result<Timestamp, Error> {
     use std::io::Cursor;
-    
+
     let res = Calendar {
         url: calendar_url,
         timeout: timeout,
@@ -189,7 +190,7 @@ async fn upgrade_timestamp(
     Timestamp::deserialize(&mut deser, commitment).map_err(|err| Error::InvalidOts(err))
 }
 
-#[cfg(all(feature = "blocking", not(feature = "async")))]
+#[cfg(not(feature = "async"))]
 pub fn upgrade(
     ots: &mut DetachedTimestampFile,
     calendar_urls: Option<Vec<String>>,
@@ -215,7 +216,7 @@ pub fn upgrade(
     Ok(())
 }
 
-#[cfg(all(feature = "blocking", not(feature = "async")))]
+#[cfg(not(feature = "async"))]
 fn upgrade_timestamp(
     commitment: Vec<u8>,
     calendar_url: String,
@@ -284,7 +285,7 @@ fn timestamp_from_merkle(
     })
 }
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
+#[cfg(feature = "async")]
 pub async fn stamps(
     digests: Vec<Vec<u8>>,
     digest_type: DigestType,
@@ -335,17 +336,14 @@ pub async fn stamps(
     }
     let calendar_urls = match calendar_urls {
         Some(urls) => urls,
-        None => vec![
-            APOOL.to_string(),
-            BPOOL.to_string(),
-            FINNEY.to_string(),
-        ],
+        None => vec![APOOL.to_string(), BPOOL.to_string(), FINNEY.to_string()],
     };
 
     let mut calendar_timestamps = vec![];
     for calendar in calendar_urls {
         info!("Submitting to remote calendar {}", calendar);
-        let calendar_timestamp = create_timestamp(merkle_tip.to_vec(), calendar.clone(), timeout).await;
+        let calendar_timestamp =
+            create_timestamp(merkle_tip.to_vec(), calendar.clone(), timeout).await;
         match calendar_timestamp {
             Ok(timestamp) => calendar_timestamps.push(timestamp),
             Err(e) => error!("Ignoring remote calendar {}: {}", calendar, e.to_string()),
@@ -378,7 +376,7 @@ pub async fn stamps(
     Ok(file_timestamps)
 }
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
+#[cfg(feature = "async")]
 async fn create_timestamp(
     stamp: Vec<u8>,
     calendar_url: String,
@@ -400,7 +398,7 @@ async fn create_timestamp(
     Timestamp::deserialize(&mut deser, stamp.to_vec()).map_err(|err| Error::InvalidOts(err))
 }
 
-#[cfg(all(feature = "blocking", not(feature = "async")))]
+#[cfg(not(feature = "async"))]
 pub fn stamps(
     digests: Vec<Vec<u8>>,
     digest_type: DigestType,
@@ -451,11 +449,7 @@ pub fn stamps(
     }
     let calendar_urls = match calendar_urls {
         Some(urls) => urls,
-        None => vec![
-            APOOL.to_string(),
-            BPOOL.to_string(),
-            FINNEY.to_string(),
-        ],
+        None => vec![APOOL.to_string(), BPOOL.to_string(), FINNEY.to_string()],
     };
 
     let mut calendar_timestamps = vec![];
@@ -494,7 +488,7 @@ pub fn stamps(
     Ok(file_timestamps)
 }
 
-#[cfg(all(feature = "blocking", not(feature = "async")))]
+#[cfg(not(feature = "async"))]
 fn create_timestamp(
     stamp: Vec<u8>,
     calendar_url: String,

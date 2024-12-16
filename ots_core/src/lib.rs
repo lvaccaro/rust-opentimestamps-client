@@ -1,7 +1,7 @@
 // Copyright (C) 2024 The OpenTimestamps developers
 
-extern crate bitcoincore_rpc;
 extern crate bitcoin_hashes;
+extern crate bitcoincore_rpc;
 extern crate chrono;
 extern crate env_logger;
 extern crate log;
@@ -15,15 +15,14 @@ pub mod client;
 pub mod error;
 pub mod extensions;
 
-
-#[cfg(all(feature = "blocking", not(feature = "async")))]
+#[cfg(not(feature = "async"))]
 extern crate electrum_client;
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
-extern crate esplora_client;
-
-#[cfg(all(feature = "blocking", not(feature = "async")))]
+#[cfg(not(feature = "async"))]
 pub mod block_calendar;
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
+#[cfg(feature = "async")]
+extern crate esplora_client;
+
+#[cfg(feature = "async")]
 pub mod async_calendar;

@@ -6,6 +6,7 @@ members = [
     "ots_bindings",
     "ots_wasm"
 ]
+default-members = [ "ots_cli","ots_core", "ots_bindings" ]
 resolver = "2"
 
 [patch.crates-io]
