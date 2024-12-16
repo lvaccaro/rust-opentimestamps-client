@@ -16,14 +16,14 @@ pub mod error;
 pub mod extensions;
 
 
-#[cfg(all(feature = "blocking", not(feature = "async")))]
+#[cfg(not(feature = "async"))]
 extern crate electrum_client;
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
-extern crate esplora_client;
-
-#[cfg(all(feature = "blocking", not(feature = "async")))]
+#[cfg(not(feature = "async"))]
 pub mod block_calendar;
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
+#[cfg(feature = "async")]
+extern crate esplora_client;
+
+#[cfg(feature = "async")]
 pub mod async_calendar;

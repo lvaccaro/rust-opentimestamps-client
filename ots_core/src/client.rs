@@ -16,10 +16,10 @@ use rs_merkle::{algorithms::Sha256, MerkleTree};
 use std::convert::TryInto;
 use std::time::Duration;
 
-#[cfg(all(feature = "blocking", not(feature = "async")))]
+#[cfg(not(feature = "async"))]
 use crate::block_calendar::{ APOOL, BPOOL, FINNEY, Calendar};
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
+#[cfg(feature = "async")]
 use crate::async_calendar::{ APOOL, BPOOL, FINNEY, Calendar};
 
 pub fn info(ots: DetachedTimestampFile) -> Result<String, Error> {
@@ -48,7 +48,7 @@ impl std::fmt::Display for BitcoinAttestationResult {
     }
 }
 
-#[cfg(all(feature = "blocking", not(feature = "async")))]
+#[cfg(not(feature = "async"))]
 pub fn verify(
     ots: DetachedTimestampFile,
     bitcoin_client: Option<bitcoincore_rpc::Client>,
@@ -102,7 +102,7 @@ pub fn verify(
     Err(Error::Generic("No bitcoin attestion found".to_string()))
 }
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
+#[cfg(feature = "async")]
 pub async fn verify(
     ots: DetachedTimestampFile,
     _bitcoin_client: Option<bitcoincore_rpc::Client>,
@@ -141,7 +141,7 @@ pub async fn verify(
     Err(Error::Generic("No bitcoin attestion found".to_string()))
 }
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
+#[cfg(feature = "async")]
 pub async fn upgrade(
     ots: &mut DetachedTimestampFile,
     calendar_urls: Option<Vec<String>>,
@@ -167,7 +167,7 @@ pub async fn upgrade(
     Ok(())
 }
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
+#[cfg(feature = "async")]
 async fn upgrade_timestamp(
     commitment: Vec<u8>,
     calendar_url: String,
@@ -189,7 +189,7 @@ async fn upgrade_timestamp(
     Timestamp::deserialize(&mut deser, commitment).map_err(|err| Error::InvalidOts(err))
 }
 
-#[cfg(all(feature = "blocking", not(feature = "async")))]
+#[cfg(not(feature = "async"))]
 pub fn upgrade(
     ots: &mut DetachedTimestampFile,
     calendar_urls: Option<Vec<String>>,
@@ -215,7 +215,7 @@ pub fn upgrade(
     Ok(())
 }
 
-#[cfg(all(feature = "blocking", not(feature = "async")))]
+#[cfg(not(feature = "async"))]
 fn upgrade_timestamp(
     commitment: Vec<u8>,
     calendar_url: String,
@@ -284,7 +284,7 @@ fn timestamp_from_merkle(
     })
 }
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
+#[cfg(feature = "async")]
 pub async fn stamps(
     digests: Vec<Vec<u8>>,
     digest_type: DigestType,
@@ -378,7 +378,7 @@ pub async fn stamps(
     Ok(file_timestamps)
 }
 
-#[cfg(all(feature = "async", not(feature = "blocking")))]
+#[cfg(feature = "async")]
 async fn create_timestamp(
     stamp: Vec<u8>,
     calendar_url: String,
@@ -400,7 +400,7 @@ async fn create_timestamp(
     Timestamp::deserialize(&mut deser, stamp.to_vec()).map_err(|err| Error::InvalidOts(err))
 }
 
-#[cfg(all(feature = "blocking", not(feature = "async")))]
+#[cfg(not(feature = "async"))]
 pub fn stamps(
     digests: Vec<Vec<u8>>,
     digest_type: DigestType,
@@ -494,7 +494,7 @@ pub fn stamps(
     Ok(file_timestamps)
 }
 
-#[cfg(all(feature = "blocking", not(feature = "async")))]
+#[cfg(not(feature = "async"))]
 fn create_timestamp(
     stamp: Vec<u8>,
     calendar_url: String,
